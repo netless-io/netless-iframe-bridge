@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+      "rootDir": "./src",
+      "outDir": "dist",
+      "strictNullChecks": true,
+      "sourceMap": true,
+      "declaration": true,
+      "noImplicitAny": true,
+      "module": "ES6",
+      "skipLibCheck": true,
+      "target": "es5",
+      "jsx": "react",
+      "forceConsistentCasingInFileNames": false,
+      "lib": [
+        "es6",
+        "dom"
+      ],
+      "allowSyntheticDefaultImports": true,
+      "experimentalDecorators": true,
+      "moduleResolution": "node",
+      "types" : [],
+    },
+    "include": [
+      "./src",
+      "../node_modules/@types/**/index.d.ts"
+    ]
+  }
+  
