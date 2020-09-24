@@ -2,7 +2,7 @@
 
 > 本项目主要用于连接白板和 `Iframe`, 也就是 `H5` 课件
 
-### 初始化插件
+### example
 
 ``` typescript
 import {WhiteWebSdk} from "white-react-sdk"
@@ -23,5 +23,10 @@ IframeBridge.setup({
   height: 720, // 课件的高, 单位是 px
   totalPage: 10, // h5 课件的总页数
 })
+
+
+IframeBridge.setIframeWidthHeigth({ width: 1200, height: 700 }) // 修改 iframe 的宽高
 ```
+
+
 
