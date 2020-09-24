@@ -1,4 +1,4 @@
-import {InvisiblePlugin, Event, RoomState} from "white-web-sdk";
+import {InvisiblePlugin, Event, RoomState, Room} from "white-web-sdk";
 
 export type IframeBridgeAttributes = {
     url: string;
@@ -15,7 +15,7 @@ export type IframeWidthHeigth = {
 };
 
 export type SetupPayload = {
-    room: any;
+    room: Room;
     url: string;
     totalPage: number;
     width: number;
@@ -40,21 +40,11 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public static readonly kind: string = "IframeBridge";
 
-    public static room: any = null;
+    public static room: Room;
     public url: string | null = null;
     public id: string | null = null;
     public iframe: HTMLIFrameElement | null = null;
     private magixEventMap: Map<string, (event: Event) => void> = new Map();
-
-    public static onCreate(plugin: IframeBridge): void {
-        console.log("create", plugin);
-        (window as any).plugin = plugin;
-    }
-
-    public static onDestroy(plugin: IframeBridge): void {
-        console.log("destroy", plugin);
-        delete (window as any).plugin;
-    }
 
     public onAttributesUpdate(attributes: IframeBridgeAttributes): void {
         this.postMessage({ kind: IframeEvents.attributesUpdate, payload: attributes });
@@ -69,9 +59,17 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     public static async setup(payload: SetupPayload): Promise<IframeBridge> {
-        let instance: IframeBridge = payload.room.getInvisiblePlugin(IframeBridge.kind);
+        let instance = (payload.room as any).getInvisiblePlugin(IframeBridge.kind);
         if (!instance) {
-            instance = await payload.room.createInvisiblePlugin(IframeBridge);
+            const initAttributes: IframeBridgeAttributes = {
+                url: payload.url,
+                width: payload.width,
+                height: payload.height,
+                totalPage: payload.totalPage,
+                currentPage: 1,
+                currentIndex: 0,
+            };
+            instance = await payload.room.createInvisiblePlugin(IframeBridge, initAttributes);
         }
         IframeBridge.room = payload.room;
         instance.listenIframe(payload);
@@ -93,7 +91,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         const sceneDir = payload.sceneDir || "/h5";
         const currentPage = 1;
         const scenes = new Array(payload.totalPage).fill(0).map((_, index) => {
-            return { name: index + 1 };
+            return { name: `${index + 1}` };
         });
         payload.room.putScenes(sceneDir, scenes);
         payload.room.setScenePath(sceneDir);
@@ -124,7 +122,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
     }
 
-    private fllowCamera(room: any): void {
+    private fllowCamera(room: Room): void {
         this.computedCssText(room.state);
         room.callbacks.on("onRoomStateChanged", (state: RoomState) => {
             this.postMessage({ kind: "onRoomStateChanged", payload: state });
