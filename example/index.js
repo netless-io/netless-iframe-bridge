@@ -17,7 +17,7 @@ whiteWebSdk.joinRoom(joinRoomParams).then(function(room) {
     // 并将之前的 <div id="whiteboard"/> 占位符变成白板
     room.bindHtmlElement(document.getElementById("whiteboard"));
     window.room = room
-    setup(room) // 加入房价只会传入 room 实例
+    setup(room) // 加入房间之后传入 room 实例初始化插件
 }).catch(function(err) {
     // 加入房间失败
     console.error(err);
