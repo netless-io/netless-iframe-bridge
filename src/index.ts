@@ -56,6 +56,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             IframeBridge.room.removeMagixEventListener(event, listener);
         });
         this.magixEventMap.clear();
+        if (this.iframe) {
+            this.iframe.parentNode?.removeChild(this.iframe);
+        }
     }
 
     public static async setup(payload: SetupPayload): Promise<IframeBridge> {
