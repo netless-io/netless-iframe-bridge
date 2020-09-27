@@ -159,6 +159,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     private messageListener(event: MessageEvent): void {
+        if (event.origin === this.iframeOrigin) {
+            return;
+        }
         const data = event.data;
         switch (data.kind) {
             case IframeEvents.setAttributesEvent:
@@ -275,6 +278,11 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         const width = iframe.getAttribute("width") || "0";
         const height = iframe.getAttribute("height") || "0";
         return { width: parseInt(width), height: parseInt(height) };
+    }
+
+    private get iframeOrigin (): string {
+        const url = new URL(this.iframe!.src);
+        return url.origin;
     }
 }
 
