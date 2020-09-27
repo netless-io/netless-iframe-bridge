@@ -41,8 +41,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     public static readonly kind: string = "IframeBridge";
 
     public static room: Room;
-    public url: string | null = null;
-    public id: string | null = null;
     public iframe: HTMLIFrameElement | null = null;
     private magixEventMap: Map<string, (event: Event) => void> = new Map();
 
