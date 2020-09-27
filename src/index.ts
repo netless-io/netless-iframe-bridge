@@ -159,7 +159,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     private messageListener(event: MessageEvent): void {
-        if (event.origin === this.iframeOrigin) {
+        if (event.origin !== this.iframeOrigin) {
             return;
         }
         const data = event.data;
