@@ -1,9 +1,9 @@
 import * as React from "react";
-import { IframeBridge, WrapperDidMount } from "./index";
+import { IframeBridge, DomEvents } from "./index";
 
 export class IframeWrapper extends React.Component {
     public componentDidMount(): void {
-        IframeBridge.emitter.emit(WrapperDidMount);
+        IframeBridge.emitter.emit(DomEvents.WrapperDidMount);
     }
 
     public render(): React.ReactNode {

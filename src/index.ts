@@ -13,14 +13,18 @@ export type IframeSize = {
 };
 
 export type InsertOptions = {
-    readonly player: any;
+    readonly room: Room;
+} & BaseOption;
+
+type BaseOption = {
     readonly url: string;
     readonly width: number;
     readonly height: number;
-    readonly readOnly: boolean;
-    readonly isReplay: boolean;
-    onLoad?: (event: globalThis.Event) => void;
 };
+
+type OnCreateInsertOption = {
+    readonly displayer: Displayer;
+} & BaseOption;
 
 export enum IframeEvents {
     Init = "Init",
@@ -36,7 +40,10 @@ export enum IframeEvents {
     PrevPage = "PrevPage",
 }
 
-export const WrapperDidMount = "WrapperDidMount";
+export enum DomEvents {
+    WrapperDidMount = "WrapperDidMount",
+    IframeLoad = "IframeLoad",
+}
 
 export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
@@ -46,7 +53,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public iframe: HTMLIFrameElement | null = null;
     private readonly magixEventMap: Map<string, (event: Event) => void> = new Map();
-    private readOnly: boolean;
     private isReplay: boolean;
     private cssList: string[];
 
@@ -58,7 +64,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     public static onCreate(plugin: IframeBridge): void {
         const attributes = plugin.attributes;
         if (attributes.url && attributes.height && attributes.width) {
-            this.insert({ ...attributes, isReplay: false, readOnly: true, player: IframeBridge.displayer });
+            plugin.insertByOnCreate({ ...attributes, displayer: this.displayer });
         }
     }
 
@@ -78,37 +84,38 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     public static async insert(options: InsertOptions): Promise<IframeBridge> {
-        let instance = (options.player as any).getInvisiblePlugin(IframeBridge.kind);
-        if (!instance) {
-            const initAttributes: IframeBridgeAttributes = {
-                url: options.url,
-                width: options.width,
-                height: options.height,
-            };
-            instance = await (options.player as any).createInvisiblePlugin(IframeBridge, initAttributes);
-        }
-        instance.isReplay = options.isReplay;
-        instance.readOnly = options.readOnly;
-        const wrapperDidMountListener = () => {
-            instance.getIframe();
-            instance.listenIframe(options);
-            instance.fllowCamera();
+        const initAttributes: IframeBridgeAttributes = {
+            url: options.url,
+            width: options.width,
+            height: options.height,
         };
-        if (instance.getIframe()) {
-            wrapperDidMountListener();
-        } else {
-            this.emitter.once(WrapperDidMount, wrapperDidMountListener);
-        }
+        const instance: any = await options.room.createInvisiblePlugin(IframeBridge, initAttributes);
+        instance.baseInsert(options);
         return instance;
     }
 
-    public setAttributes(payload: any): void {
-        this.ensureNotReadOnly();
-        super.setAttributes(payload);
+    public insertByOnCreate(options: OnCreateInsertOption): void {
+        const instance = (options.displayer as any).getInvisiblePlugin(IframeBridge.kind);
+        instance.baseInsert(options);
     }
 
-    public setReadOnly(readOnly: boolean): void {
-        this.readOnly = readOnly;
+    public baseInsert(options: BaseOption): IframeBridge {
+        const wrapperDidMountListener = () => {
+            this.getIframe();
+            this.listenIframe(options);
+            this.fllowCamera();
+        };
+        if (this.getIframe()) {
+            wrapperDidMountListener();
+        } else {
+            IframeBridge.emitter.once(DomEvents.WrapperDidMount, wrapperDidMountListener);
+        }
+        return this;
+    }
+
+    public setAttributes(payload: any): void {
+        this.ensureNotReadonly();
+        super.setAttributes(payload);
     }
 
     private getIframe(): HTMLIFrameElement {
@@ -125,7 +132,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
     }
 
-    private listenIframe(options: InsertOptions): void {
+    private listenIframe(options: BaseOption): void {
         const iframe = document.getElementById(IframeBridge.kind) as HTMLIFrameElement;
         this.iframe = iframe;
         iframe.src = options.url;
@@ -137,9 +144,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 attributes: this.attributes,
                 roomState: IframeBridge.displayer.state,
             } });
-            if (options.onLoad) {
-                options.onLoad(ev);
-            }
+            IframeBridge.emitter.emit(DomEvents.IframeLoad, ev);
         });
     }
 
@@ -183,7 +188,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private computedZindex(): void {
         const zIndexString = "z-index: -1;";
         const index = this.cssList.findIndex(css => css === zIndexString);
-        if (index !== undefined) {
+        if (index !== -1) {
             this.cssList.splice(index, 1);
         }
         if (!this.isSelector()) {
@@ -266,7 +271,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     private handleNextPage(): void {
-        this.ensureNotReadOnly();
+        this.ensureNotReadonly();
         const nextPageNum = this.currentPage + 1;
         if (nextPageNum > this.totalPage) {
             return;
@@ -276,7 +281,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     private handlePrevPage(): void {
-        this.ensureNotReadOnly();
+        this.ensureNotReadonly();
         const prevPageNum = this.currentPage - 1;
         if (prevPageNum < 0) {
             return;
@@ -299,7 +304,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     private dispatchMagixEvent(event: string, payload: any): void {
-        this.ensureNotReadOnly();
+        this.ensureNotReadonly();
         (this.displayer as any).dispatchMagixEvent(event, payload);
     }
 
@@ -315,14 +320,18 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         return this.displayer.state.sceneState.scenes.length;
     }
 
-    private ensureNotReadOnly(): void {
-        if (this.readOnly) {
+    private get readonly(): boolean {
+        return !(this.displayer as any).isWritable;
+    }
+
+    private ensureNotReadonly(): void {
+        if (this.readonly) {
             throw new Error("readOnly mode cannot invoke this method");
         }
     }
 
     private isSelector(): boolean {
-        if (this.readOnly) {
+        if (this.readonly) {
             return false;
         }
         return (this.displayer as Room).state.memberState.currentApplianceName === "selector";

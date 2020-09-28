@@ -8,7 +8,7 @@
 
 ``` typescript
 import {WhiteWebSdk} from "white-react-sdk"
-import {IframeBridge, IframeWrapper} from "iframe-bridge"
+import {IframeBridge, IframeWrapper} from "@netless/iframe-bridge"
 
 const sdk = new WhiteWebSdk({
   // 其他参数
@@ -25,9 +25,6 @@ const bridge = await IframeBridge.setup({
   height: 720, // 课件的高, 单位 px
   readOnly: false, // readOnly 为 true 的时候插件只能接受事件，不能发送事件,
   isReplay: false, // 回放房间传入此参数
-  onLoad: (event) => { //可选, 为 iframe load 事件触发回调
-      // code
-  } 
 })
 ```
 ## `setReadOnly`
@@ -54,6 +51,16 @@ bridge.attributes
 ```typescript
 bridge.setAttributes({ name: "bridge" })
 ```
+
+## `on`
+监听 `iframe``load` 事件
+```typescript
+import { DomEvents } from "@netless/iframe-bridge"
+
+bridge.on(DomEvents.IframeLoad, (event) => {
+    // code
+})
+``` 
 
 ## `destroy`
 销毁插件
