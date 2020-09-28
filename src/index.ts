@@ -5,8 +5,6 @@ export type IframeBridgeAttributes = {
     width: number;
     height: number;
     totalPage: number;
-    currentPage: number;
-    currentIndex: number;
 };
 
 export type IframeWidthHeigth = {
@@ -25,15 +23,17 @@ export type SetupPayload = {
 };
 
 export enum IframeEvents {
-    initAttributes = "initAttributes",
-    attributesUpdate = "attributesUpdate",
-    setAttributesEvent = "setAttributesEvent",
-    registerMagixEvent = "registerMagixEvent",
-    removeMagixEvent = "removeMagixEvent",
-    removeAllMagixEvent = "removeAllMagixEvent",
-    magixEvent = "MagixEvent",
-    nextPage = "nextPage",
-    prevPage = "prevPage",
+    Init = "Init",
+    AttributesUpdate = "AttributesUpdate",
+    SetAttributes = "SetAttributes",
+    RegisterMagixEvent = "RegisterMagixEvent",
+    RemoveMagixEvent = "RemoveMagixEvent",
+    RemoveAllMagixEvent = "RemoveAllMagixEvent",
+    RoomStateChanged = "RoomStateChanged",
+    DispatchMagixEvent = "DispatchMagixEvent",
+    ReciveMagixEvent = "ReciveMagixEvent",
+    NextPage = "NextPage",
+    PrevPage = "PrevPage",
 }
 
 export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
@@ -45,7 +45,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private magixEventMap: Map<string, (event: Event) => void> = new Map();
 
     public onAttributesUpdate(attributes: IframeBridgeAttributes): void {
-        this.postMessage({ kind: IframeEvents.attributesUpdate, payload: attributes });
+        this.postMessage({ kind: IframeEvents.AttributesUpdate, payload: attributes });
     }
 
     public onDestroy(): void {
@@ -67,8 +67,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 width: payload.width,
                 height: payload.height,
                 totalPage: payload.totalPage,
-                currentPage: 1,
-                currentIndex: 0,
             };
             instance = await payload.room.createInvisiblePlugin(IframeBridge, initAttributes);
         }
@@ -84,26 +82,22 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.iframe.width = `${params.width}px`;
             this.iframe.height = `${params.height}px`;
             this.setAttributes({ width: params.width, height: params.height });
-            this.updateAttributes();
         }
     }
 
     private createScene(payload: SetupPayload): void {
         const sceneDir = payload.sceneDir || "/h5";
-        const currentPage = 1;
         const scenes = new Array(payload.totalPage).fill(0).map((_, index) => {
             return { name: `${index + 1}` };
         });
         payload.room.putScenes(sceneDir, scenes);
         payload.room.setScenePath(sceneDir);
-        payload.room.setSceneIndex(currentPage - 1);
+        payload.room.setSceneIndex(0);
         this.setAttributes({
             totalPage: payload.totalPage,
-            currentPage,
             width: payload.width,
             height: payload.height,
         });
-        this.updateAttributes();
     }
 
     private listenIframe(payload: SetupPayload): void {
@@ -115,7 +109,10 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.iframe = iframe;
             window.addEventListener("message", this.messageListener.bind(this));
             iframe.addEventListener("load", (ev: globalThis.Event) => {
-                this.postMessage({ kind: IframeEvents.initAttributes, payload: this.attributes });
+                this.postMessage({ kind: IframeEvents.Init, payload: {
+                    attributes: this.attributes,
+                    roomState: payload.room.state,
+                } });
                 if (payload.onLoad) {
                     payload.onLoad(ev);
                 }
@@ -126,7 +123,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private fllowCamera(room: Room): void {
         this.computedCssText(room.state);
         room.callbacks.on("onRoomStateChanged", (state: RoomState) => {
-            this.postMessage({ kind: "onRoomStateChanged", payload: state });
+            this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
             if (state.cameraState || state.memberState) {
                 this.computedCssText(room.state);
             }
@@ -162,31 +159,38 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
         const data = event.data;
         switch (data.kind) {
-            case IframeEvents.setAttributesEvent:
-                this.handleSetAttributesEvent(data);
+            case IframeEvents.SetAttributes: {
+                this.handleSetAttributes(data);
                 break;
-            case IframeEvents.registerMagixEvent:
+            }
+            case IframeEvents.RegisterMagixEvent: {
                 this.handleRegisterMagixEvent(data);
                 break;
-            case IframeEvents.removeMagixEvent:
-               this.handleRemoveMagixEvent(data);
-               break;
-            case IframeEvents.magixEvent:
-                this.handleMagixEvent(data);
+            }
+            case IframeEvents.RegisterMagixEvent: {
+                this.handleRemoveMagixEvent(data);
                 break;
-            case IframeEvents.removeAllMagixEvent:
+            }
+            case IframeEvents.DispatchMagixEvent: {
+                this.handleDispatchMagixEvent(data);
+                break;
+            }
+            case IframeEvents.RegisterMagixEvent: {
                 this.handleRemoveAllMagixEvent();
                 break;
-            case IframeEvents.nextPage:
+            }
+            case IframeEvents.NextPage: {
                 this.handleNextPage();
                 break;
-            case IframeEvents.prevPage:
+            }
+            case IframeEvents.PrevPage: {
                 this.handlePrevPage();
                 break;
+            }
         }
     }
 
-    private handleMagixEvent(data: any): void {
+    private handleDispatchMagixEvent(data: any): void {
         const eventPayload = data.payload;
         let payload = eventPayload.payload;
         if ((typeof payload) !== "object") {
@@ -195,9 +199,8 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         this.dispatchMagixEvent(eventPayload.event, payload);
     }
 
-    private handleSetAttributesEvent(data: any): void {
+    private handleSetAttributes(data: any): void {
         this.setAttributes(data.payload);
-        this.updateAttributes();
     }
 
     private handleRegisterMagixEvent(data: any): void {
@@ -206,7 +209,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             if (event.authorId === IframeBridge.room.observerId) {
                 return;
             }
-            this.postMessage({ kind: IframeEvents.magixEvent, payload: event });
+            this.postMessage({ kind: IframeEvents.ReciveMagixEvent, payload: event });
         };
         this.magixEventMap.set(eventName, listener);
         IframeBridge.room.addMagixEventListener(eventName, listener);
@@ -219,25 +222,21 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     private handleNextPage(): void {
-        const nextPageNum = this.attributes.currentPage + 1;
+        const nextPageNum = this.currentPage + 1;
         if (nextPageNum > this.attributes.totalPage) {
             return;
         }
-        this.setAttributes({ currentPage: nextPageNum });
-        this.updateAttributes();
         IframeBridge.room.setSceneIndex(nextPageNum - 1);
-        this.dispatchMagixEvent(IframeEvents.nextPage, {});
+        this.dispatchMagixEvent(IframeEvents.NextPage, {});
     }
 
     private handlePrevPage(): void {
-        const prevPageNum = this.attributes.currentPage - 1;
+        const prevPageNum = this.currentPage - 1;
         if (prevPageNum < 0) {
             return;
         }
-        this.setAttributes({ currentPage: prevPageNum });
-        this.updateAttributes();
         IframeBridge.room.setSceneIndex(prevPageNum - 1);
-        this.dispatchMagixEvent(IframeEvents.prevPage, {});
+        this.dispatchMagixEvent(IframeEvents.PrevPage, {});
     }
 
     private handleRemoveAllMagixEvent(): void {
@@ -260,12 +259,17 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         IframeBridge.room.dispatchMagixEvent(event, payload);
     }
 
-    private updateAttributes(): void {
-        this.postMessage({ kind: IframeEvents.attributesUpdate, payload: this.attributes });
-    }
 
     private get isFollower (): boolean {
         return IframeBridge.room.state.broadcastState.mode === "follower";
+    }
+
+    private get currentIndex(): number {
+        return IframeBridge.room.state.sceneState.index;
+    }
+
+    private get currentPage(): number {
+        return this.currentIndex + 1;
     }
 
     private isSelector(state: RoomState): boolean {
