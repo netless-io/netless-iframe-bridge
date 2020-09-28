@@ -30,6 +30,11 @@ const bridge = await IframeBridge.setup({
   } 
 })
 ```
+## `setReadOnly`
+同步插入的 `iframe` 的 `readOnly` 默认为 `true`, 有互动需求的请设置为 `false`
+```typescript
+bridge.setReadOnly(false)
+```
 
 ## `setIframeSize`
 ```typescript
