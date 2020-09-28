@@ -1,5 +1,5 @@
 import {InvisiblePlugin, Event, RoomState, InvisiblePluginContext, Displayer, Room, DisplayerState} from "white-web-sdk";
-import { EventEmitter2 } from "eventemitter2";
+import {EventEmitter2} from "eventemitter2";
 
 export type IframeBridgeAttributes = {
     readonly url: string;
@@ -147,7 +147,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         this.computedStyle(this.displayer.state);
         this.updateStyle();
         const callbackName = this.isReplay ? "onReplayStateChanged" : "onRoomStateChanged";
-        (this.displayer as any).callbacks.on(callbackName, (state: RoomState) => {
+        this.displayer.callbacks.on(callbackName as any, (state: RoomState) => {
             this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
             if (state.cameraState) {
                 this.computedStyle(this.displayer.state);
