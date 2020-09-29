@@ -238,6 +238,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             }
             default: {
                 console.warn(`${data.kind} not allow event.`);
+                break;
             }
         }
     }
