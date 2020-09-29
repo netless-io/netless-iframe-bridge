@@ -150,13 +150,11 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     private fllowCamera(): void {
         this.computedStyle(this.displayer.state);
-        this.updateStyle();
         const callbackName = this.isReplay ? "onReplayStateChanged" : "onRoomStateChanged";
         this.displayer.callbacks.on(callbackName as any, (state: RoomState) => {
             this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
             if (state.cameraState) {
                 this.computedStyle(this.displayer.state);
-                this.updateStyle();
             }
             if (state.memberState) {
                 this.computedZindex();
@@ -182,6 +180,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             const cssList = [position, borderWidth, top, left, transformOrigin, transform];
             this.cssList = cssList;
             this.computedZindex();
+            this.updateStyle();
         }
     }
 
