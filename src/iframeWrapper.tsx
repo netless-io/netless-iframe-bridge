@@ -1,11 +1,15 @@
 import * as React from "react";
-import { IframeBridge } from "./index";
+import { IframeBridge, DomEvents } from "./index";
 
-export const IframeWrapper: React.FunctionComponent = ({ children }) => {
-    return (
-        <React.Fragment>
-            {children}
+export class IframeWrapper extends React.Component {
+    public componentDidMount(): void {
+        IframeBridge.emitter.emit(DomEvents.WrapperDidMount);
+    }
+
+    public render(): React.ReactNode {
+        return <React.Fragment>
+            {this.props.children}
             <iframe id={IframeBridge.kind} />
-        </React.Fragment>
-    );
-};
+        </React.Fragment>;
+    }
+}

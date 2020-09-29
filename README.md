@@ -8,10 +8,10 @@
 
 ``` typescript
 import {WhiteWebSdk} from "white-react-sdk"
-import {IframeBridge, IframeWrapper} from "iframe-bridge"
+import {IframeBridge, IframeWrapper} from "@netless/iframe-bridge"
 
 const sdk = new WhiteWebSdk({
- 	// 其他参数
+  // 其他参数
   invisiblePlugins: [IframeBridge],
   wrappedComponents: [IframeWrapper],
 })
@@ -23,17 +23,19 @@ const bridge = await IframeBridge.setup({
   url: "example.com", // iframe 的地址
   width: 1280, // 课件的宽, 单位 px
   height: 720, // 课件的高, 单位 px
-  totalPage: 10, // h5 课件的总页数
-  sceneDir: "/h5", // 可选, 为初始化课件时的 scenes 目录名称, 默认为 /h5
-  onLoad: (event) => { //可选, 为 iframe load 事件触发回调
-      // code
-  } 
+  readOnly: false, // readOnly 为 true 的时候插件只能接受事件，不能发送事件,
+  isReplay: false, // 回放房间传入此参数
 })
 ```
-
-## `setIframeWidthHeigth`
+## `setReadOnly`
+同步插入的 `iframe` 的 `readOnly` 默认为 `true`, 有互动需求的请设置为 `false`
 ```typescript
-bridge.setIframeWidthHeigth({ width: 1200, height: 700 }) // 修改 iframe 的宽高
+bridge.setReadOnly(false)
+```
+
+## `setIframeSize`
+```typescript
+bridge.setIframeSize({ width: 1200, height: 700 }) // 修改 iframe 的宽高
 ```
 
 ## `attributes`
@@ -44,9 +46,21 @@ bridge.attributes
 
 ## `setAttributes`
 修改 `attributes`, 并且会触发事件传递 `attributes` 到 `iframe` 中
+
+`readOnly` 模式下不可用
 ```typescript
 bridge.setAttributes({ name: "bridge" })
 ```
+
+## `on`
+监听 `iframe``load` 事件
+```typescript
+import { DomEvents } from "@netless/iframe-bridge"
+
+bridge.on(DomEvents.IframeLoad, (event) => {
+    // code
+})
+``` 
 
 ## `destroy`
 销毁插件
