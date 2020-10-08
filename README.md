@@ -18,19 +18,12 @@ const sdk = new WhiteWebSdk({
 
 const room = await sdk.joinRoom()
 
-const bridge = await IframeBridge.setup({
+const bridge = await IframeBridge.insert({
   room: room, // room 实例
   url: "example.com", // iframe 的地址
   width: 1280, // 课件的宽, 单位 px
   height: 720, // 课件的高, 单位 px
-  readOnly: false, // readOnly 为 true 的时候插件只能接受事件，不能发送事件,
-  isReplay: false, // 回放房间传入此参数
 })
-```
-## `setReadOnly`
-同步插入的 `iframe` 的 `readOnly` 默认为 `true`, 有互动需求的请设置为 `false`
-```typescript
-bridge.setReadOnly(false)
 ```
 
 ## `setIframeSize`
@@ -67,3 +60,27 @@ bridge.on(DomEvents.IframeLoad, (event) => {
 ```typescript
 bridge.destroy()
 ```
+
+## 在特定 `scene` 中使用 `H5` 课件
+
+1. 插入 `h5` 目录和页面至白板
+```typescript
+const dir = "/h5" // h5 课件在白板中的目录名称，可以自定义为任意名称，注意不要跟已有目录重复
+const scenes = [{name: "第一页"}, { name: "第二页" }] // h5 课件有多少页可以创建多少个, 但并不是严格对应
+room.putScenes(dir, scenes)
+```
+
+2. 切换至 `h5` 课件目录
+```typescript
+room.setScenePath("/h5/第一页") // 设置为课件目录的第一页
+```
+
+3. 翻页
+可以使用 `sdk` 封装的翻页，也可以自己调用白板的翻页
+参考: [白板翻页](https://developer.netless.link/docs/javascript/features/js-scenes/#%E7%BF%BB%E9%A1%B5%EF%BC%88%E5%90%8C%E7%9B%AE%E5%BD%95%EF%BC%89)
+```typescript
+// 白板翻页
+room.setSceneIndex(room.state.sceneState.index - 1); // 上一页
+room.setSceneIndex(room.state.sceneState.index + 1) // 下一页
+```
+
