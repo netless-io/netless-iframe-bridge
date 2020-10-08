@@ -53,7 +53,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public iframe: HTMLIFrameElement | null = null;
     private readonly magixEventMap: Map<string, (event: Event) => void> = new Map();
-    private isReplay: boolean;
     private cssList: string[];
 
     public constructor(context: InvisiblePluginContext) {
@@ -69,6 +68,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     public onAttributesUpdate(attributes: IframeBridgeAttributes): void {
+        if (attributes.url) {
+            this.listenIframe(this.attributes);
+        }
         this.postMessage({ kind: IframeEvents.AttributesUpdate, payload: attributes });
     }
 
@@ -80,10 +82,15 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         this.magixEventMap.clear();
         if (this.iframe) {
             this.iframe.parentNode?.removeChild(this.iframe);
+            this.iframe = null;
         }
     }
 
     public static async insert(options: InsertOptions): Promise<IframeBridge> {
+        const plugin = (options.room as any).getInvisiblePlugin(IframeBridge.kind);
+        if (plugin) {
+            throw new Error("plugin already inserted, can't re-insert");
+        }
         const initAttributes: IframeBridgeAttributes = {
             url: options.url,
             width: options.width,
@@ -115,6 +122,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public setAttributes(payload: any): void {
         this.ensureNotReadonly();
+        if (payload.url) {
+            this.listenIframe(Object.assign(this.attributes, payload));
+        }
         super.setAttributes(payload);
     }
 
@@ -134,18 +144,23 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     private listenIframe(options: BaseOption): void {
         const iframe = document.getElementById(IframeBridge.kind) as HTMLIFrameElement;
-        this.iframe = iframe;
-        iframe.src = options.url;
-        iframe.width = `${options.width}px`;
-        iframe.height = `${options.height}px`;
-        window.addEventListener("message", this.messageListener.bind(this));
-        iframe.addEventListener("load", (ev: globalThis.Event) => {
+        const loadListener = (ev: globalThis.Event) => {
             this.postMessage({ kind: IframeEvents.Init, payload: {
                 attributes: this.attributes,
                 roomState: IframeBridge.displayer.state,
             } });
             IframeBridge.emitter.emit(DomEvents.IframeLoad, ev);
-        });
+        };
+        if (iframe.src) {
+            window.removeEventListener("message", this.messageListener);
+            iframe.removeEventListener("load", loadListener);
+        }
+        this.iframe = iframe;
+        iframe.src = options.url;
+        iframe.width = `${options.width}px`;
+        iframe.height = `${options.height}px`;
+        window.addEventListener("message", this.messageListener.bind(this));
+        iframe.addEventListener("load", loadListener);
     }
 
     private fllowCamera(): void {
@@ -174,8 +189,8 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             const left = `left: ${(cameraState.width - width) / 2}px;`;
             const top = `top: ${(cameraState.height - height) / 2}px;`;
             const transformOrigin = `transform-origin: ${transformOriginX} ${transformOriginY};`;
-            const x =  - ((cameraState.centerX) * cameraState.scale);
-            const y = - ((cameraState.centerY) * cameraState.scale);
+            const x =  - (cameraState.centerX * cameraState.scale);
+            const y = - (cameraState.centerY * cameraState.scale);
             const transform = `transform: translate(${x}px,${y}px) scale(${cameraState.scale}, ${cameraState.scale});`;
             const cssList = [position, borderWidth, top, left, transformOrigin, transform];
             this.cssList = cssList;
@@ -324,6 +339,10 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         return !(this.displayer as any).isWritable;
     }
 
+    private get isReplay(): boolean {
+        return !(this.displayer as any).getInvisiblePlugin;
+    }
+
     private ensureNotReadonly(): void {
         if (this.readonly) {
             throw new Error("readOnly mode cannot invoke this method");
@@ -349,4 +368,4 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 }
 
-export * from "./iframeWrapper";
+export * from "./IframeWrapper";
