@@ -18,12 +18,18 @@ const sdk = new WhiteWebSdk({
 
 const room = await sdk.joinRoom()
 
-const bridge = await IframeBridge.insert({
-  room: room, // room 实例
-  url: "example.com", // iframe 的地址
-  width: 1280, // 课件的宽, 单位 px
-  height: 720, // 课件的高, 单位 px
-})
+let bridge;
+
+bridge = room.getInvisiblePlugin(IframeBridge.kind) // bridge 插入一次后续会自动插入，所以需要先 get 防止重复插入
+
+if (!bridge) {
+    bridge = await IframeBridge.insert({
+        room: room, // room 实例
+        url: "example.com", // iframe 的地址
+        width: 1280, // 课件的宽, 单位 px
+        height: 720, // 课件的高, 单位 px
+    })
+}
 ```
 
 ## `setIframeSize`
@@ -84,3 +90,7 @@ room.setSceneIndex(room.state.sceneState.index - 1); // 上一页
 room.setSceneIndex(room.state.sceneState.index + 1) // 下一页
 ```
 
+## 切换课件
+```typescript
+bridge.setAttributes({ url: "https://xxxx.com" })
+```
