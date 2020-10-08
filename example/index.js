@@ -1,6 +1,5 @@
 import { WhiteWebSdk } from "white-web-sdk"
 import { IframeBridge, IframeWrapper } from "../dist"
-import Dotenv from "dotenv"
 
 const whiteWebSdk = new WhiteWebSdk({
     appIdentifier: "appIdentifier",
