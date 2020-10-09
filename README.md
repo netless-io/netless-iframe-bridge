@@ -17,7 +17,7 @@ yarn add netless-iframe-bridge
 
 ``` typescript
 import {WhiteWebSdk} from "white-react-sdk"
-import {IframeBridge, IframeWrapper} from "netless-iframe-bridge"
+import {IframeBridge, IframeWrapper} from "@netless/iframe-bridge"
 
 const sdk = new WhiteWebSdk({
   // 其他参数
