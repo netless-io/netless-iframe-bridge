@@ -87,7 +87,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     public static async insert(options: InsertOptions): Promise<IframeBridge> {
-        const plugin = (options.room as any).getInvisiblePlugin(IframeBridge.kind);
+        const plugin = options.room.getInvisiblePlugin(IframeBridge.kind);
         if (plugin) {
             throw new Error("plugin already inserted, can't re-insert");
         }
@@ -181,7 +181,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private computedStyle(state: DisplayerState): void {
         const cameraState = state.cameraState;
         if (this.iframe) {
-            const { width, height } = this.getIframeSize(this.iframe);
+            const { width, height } = cameraState;
             const position = "position: absolute;";
             const borderWidth = "border-width: 0px;";
             const transformOriginX = `${(cameraState.width / 2)}px`;
@@ -354,12 +354,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             return false;
         }
         return (this.displayer as Room).state.memberState.currentApplianceName === "selector";
-    }
-
-    private getIframeSize(iframe: HTMLIFrameElement): IframeSize {
-        const width = iframe.getAttribute("width") || "0";
-        const height = iframe.getAttribute("height") || "0";
-        return { width: parseInt(width), height: parseInt(height) };
     }
 
     private get iframeOrigin (): string {
