@@ -29,7 +29,7 @@ const room = await sdk.joinRoom()
 
 let bridge;
 
-bridge = room.getInvisiblePlugin(IframeBridge.kind) // bridge 插入一次后续会自动插入，所以需要先 get 防止重复插入
+bridge = room.getInvisiblePlugin(IframeBridge.kind) // bridge 插入一次后续会自动插入，所以需要先 get 防止重复插入
 
 if (!bridge) {
     bridge = await IframeBridge.insert({
@@ -79,16 +79,16 @@ bridge.destroy()
 
 ## 在特定 `scene` 中使用 `H5` 课件
 
-1. 插入 `h5` 目录和页面至白板
+1. 插入自定义目录和页面至白板
 ```typescript
-const dir = "/h5" // h5 课件在白板中的目录名称，可以自定义为任意名称，注意不要跟已有目录重复
+const dir = "/example" // h5 课件在白板中的目录名称，可以自定义为任意名称，注意不要跟已有目录重复
 const scenes = [{name: "第一页"}, { name: "第二页" }] // h5 课件有多少页可以创建多少个, 但并不是严格对应
 room.putScenes(dir, scenes)
 ```
 
-2. 切换至 `h5` 课件目录
+2. 切换至自定义课件目录
 ```typescript
-room.setScenePath("/h5/第一页") // 设置为课件目录的第一页
+room.setScenePath("/example/第一页") // 设置为课件目录的第一页
 ```
 
 3. 翻页
