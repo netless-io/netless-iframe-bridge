@@ -1,7 +1,7 @@
 {
-  "name": "netless-iframe-bridge",
+  "name": "@netless/iframe-bridge",
   "version": "0.0.1",
-  "description": "",
+  "description": "iframe plugin for white-web-sdk",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
