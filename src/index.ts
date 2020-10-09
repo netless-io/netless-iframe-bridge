@@ -5,6 +5,7 @@ export type IframeBridgeAttributes = {
     readonly url: string;
     readonly width: number;
     readonly height: number;
+    readonly displaySceneDir: string;
 };
 
 export type IframeSize = {
@@ -20,6 +21,7 @@ type BaseOption = {
     readonly url: string;
     readonly width: number;
     readonly height: number;
+    readonly displaySceneDir: string;
 };
 
 type OnCreateInsertOption = {
@@ -48,8 +50,10 @@ export enum DomEvents {
 export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public static readonly kind: string = "IframeBridge";
+    private static readonly hiddenClass: string = "netless-iframe-brdige-hidden";
     public static emitter: EventEmitter2 = new EventEmitter2();
     private static displayer: Displayer;
+    private styleDom: HTMLStyleElement;
 
     public iframe: HTMLIFrameElement | null = null;
     private readonly magixEventMap: Map<string, (event: Event) => void> = new Map();
@@ -71,19 +75,14 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         if (attributes.url) {
             this.listenIframe(this.attributes);
         }
+        if (attributes.displaySceneDir) {
+            this.computedIframeDisplay(this.displayer.state, attributes);
+        }
         this.postMessage({ kind: IframeEvents.AttributesUpdate, payload: attributes });
     }
 
     public onDestroy(): void {
-        window.removeEventListener("message", this.messageListener);
-        this.magixEventMap.forEach((listener, event) => {
-            this.displayer.removeMagixEventListener(event, listener);
-        });
-        this.magixEventMap.clear();
-        if (this.iframe) {
-            this.iframe.parentNode?.removeChild(this.iframe);
-            this.iframe = null;
-        }
+        this._destory();
     }
 
     public static async insert(options: InsertOptions): Promise<IframeBridge> {
@@ -95,6 +94,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             url: options.url,
             width: options.width,
             height: options.height,
+            displaySceneDir: options.displaySceneDir,
         };
         const instance: any = await options.room.createInvisiblePlugin(IframeBridge, initAttributes);
         instance.baseInsert(options);
@@ -110,13 +110,14 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         const wrapperDidMountListener = () => {
             this.getIframe();
             this.listenIframe(options);
-            this.fllowCamera();
+            this.listenDisplayerState();
         };
         if (this.getIframe()) {
             wrapperDidMountListener();
         } else {
             IframeBridge.emitter.once(DomEvents.WrapperDidMount, wrapperDidMountListener);
         }
+        this.injectCss();
         return this;
     }
 
@@ -125,7 +126,15 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         if (payload.url) {
             this.listenIframe(Object.assign(this.attributes, payload));
         }
+        if (payload.displaySceneDir) {
+            this.computedIframeDisplay(this.displayer.state, Object.assign(this.attributes, payload));
+        }
         super.setAttributes(payload);
+    }
+
+    public destroy(): void {
+        this._destory();
+        super.destroy();
     }
 
     private getIframe(): HTMLIFrameElement {
@@ -163,8 +172,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         iframe.addEventListener("load", loadListener);
     }
 
-    private fllowCamera(): void {
+    private listenDisplayerState(): void {
         this.computedStyle(this.displayer.state);
+        this.computedIframeDisplay(this.displayer.state, this.attributes);
         const callbackName = this.isReplay ? "onReplayStateChanged" : "onRoomStateChanged";
         this.displayer.callbacks.on(callbackName as any, (state: RoomState) => {
             this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
@@ -174,6 +184,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             if (state.memberState) {
                 this.computedZindex();
                 this.updateStyle();
+            }
+            if (state.sceneState) {
+                this.computedIframeDisplay(state, this.attributes);
             }
         });
     }
@@ -196,6 +209,16 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.cssList = cssList;
             this.computedZindex();
             this.updateStyle();
+        }
+    }
+
+    private computedIframeDisplay(state: DisplayerState, attributes: IframeBridgeAttributes): void {
+        if (this.iframe) {
+            if (!state.sceneState.scenePath.startsWith(attributes.displaySceneDir)) {
+                this.iframe.classList.add(IframeBridge.hiddenClass);
+            } else {
+                this.iframe.classList.remove(IframeBridge.hiddenClass);
+            }
         }
     }
 
@@ -359,6 +382,33 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private get iframeOrigin (): string {
         const url = new URL(this.iframe!.src);
         return url.origin;
+    }
+
+    private injectCss(): void {
+        const styleDom = document.createElement("style");
+        const styleStr = `
+            .${IframeBridge.hiddenClass} {
+                display: none;
+            }
+        `;
+        this.styleDom = styleDom;
+        styleDom.appendChild(document.createTextNode(styleStr));
+        document.getElementsByTagName("head")[0].appendChild(styleDom);
+    }
+
+    private _destory(): void {
+        window.removeEventListener("message", this.messageListener);
+        this.magixEventMap.forEach((listener, event) => {
+            this.displayer.removeMagixEventListener(event, listener);
+        });
+        this.magixEventMap.clear();
+        if (this.iframe) {
+            this.iframe.parentNode?.removeChild(this.iframe);
+            this.iframe = null;
+        }
+        if (this.styleDom) {
+            this.styleDom.parentNode?.removeChild(this.styleDom);
+        }
     }
 }
 

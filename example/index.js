@@ -20,7 +20,8 @@ whiteWebSdk.joinRoom(joinRoomParams).then(function(room) {
         room,
         width: 1280,
         height: 720,
-        url: "http://localhost:1234", // iframe url
+        url: "https://www.baidu.com", // iframe url
+        displaySceneDir: "/example"
     })
 }).catch(function(err) {
     // 加入房间失败
