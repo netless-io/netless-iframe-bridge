@@ -4,11 +4,20 @@
 
 >注意, `iframe` 只有在教具为 `选择工具` 时候才能进行交互
 
+## 安装
+```
+# npm
+npm install netless-iframe-bridge
+
+# yarn
+yarn add netless-iframe-bridge
+```
+
 ## example
 
 ``` typescript
 import {WhiteWebSdk} from "white-react-sdk"
-import {IframeBridge, IframeWrapper} from "@netless/iframe-bridge"
+import {IframeBridge, IframeWrapper} from "netless-iframe-bridge"
 
 const sdk = new WhiteWebSdk({
   // 其他参数

@@ -30,10 +30,10 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
-"@netless/canvas-polyfill@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.npmjs.org/@netless/canvas-polyfill/-/canvas-polyfill-0.0.3.tgz#caf77b6b1b666db54cde5edda3751ee292bc088a"
-  integrity sha512-X3KodHfvMAIrmVBsj7kbWdcWA+eCr/uhqpix10GKXE+UovIyJd05KyFNMKIAXOMQI79NJrYiHcPBLszRRogygA==
+"@netless/canvas-polyfill@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.npmjs.org/@netless/canvas-polyfill/-/canvas-polyfill-0.0.4.tgz#b5f28eefeb9c1e8ff8253fa1b044ccb1dc1b7c9c"
+  integrity sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==
 
 "@types/prop-types@*":
   version "15.7.3"
@@ -724,12 +724,12 @@ videojs-vtt.js@^0.15.2:
   dependencies:
     global "^4.3.1"
 
-white-web-sdk@^2.10.0:
-  version "2.10.0"
-  resolved "https://registry.npmjs.org/white-web-sdk/-/white-web-sdk-2.10.0.tgz#a0829f90964746c64a8071a85913ea1f2d2ed11b"
-  integrity sha512-dUmhBFr+0l7hxs3ccR+BOnA06LMme6foGDlt6UCIwj9/Czfs4ObjwQpL/DAV1Qd6lZlNYooCyXxzNuq6pGl+bA==
+white-web-sdk@^2.10.1:
+  version "2.10.1"
+  resolved "https://registry.npmjs.org/white-web-sdk/-/white-web-sdk-2.10.1.tgz#06c2412def659d4fe408f2e13d443730a148b78e"
+  integrity sha512-ZlNZ7JNa7szOxb52sC7hwkx1/mblAsjgSmYmI/G9ZNG9qse9fq8VzuB0NQs9qDewU9FSP40o0n9nt7gkRZHXBg==
   dependencies:
-    "@netless/canvas-polyfill" "^0.0.3"
+    "@netless/canvas-polyfill" "^0.0.4"
     atob "^2.1.0"
     bezier-js "^2.4.4"
     color "^3.1.0"

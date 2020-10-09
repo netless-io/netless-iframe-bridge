@@ -87,7 +87,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     public static async insert(options: InsertOptions): Promise<IframeBridge> {
-        const plugin = (options.room as any).getInvisiblePlugin(IframeBridge.kind);
+        const plugin = options.room.getInvisiblePlugin(IframeBridge.kind);
         if (plugin) {
             throw new Error("plugin already inserted, can't re-insert");
         }
