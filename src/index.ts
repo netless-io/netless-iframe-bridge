@@ -75,6 +75,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         if (attributes.url) {
             this.listenIframe(this.attributes);
         }
+        if (attributes.displaySceneDir) {
+            this.computedIframeDisplay(this.displayer.state, attributes);
+        }
         this.postMessage({ kind: IframeEvents.AttributesUpdate, payload: attributes });
     }
 
@@ -107,7 +110,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         const wrapperDidMountListener = () => {
             this.getIframe();
             this.listenIframe(options);
-            this.fllowCamera();
+            this.listenDisplayerState();
         };
         if (this.getIframe()) {
             wrapperDidMountListener();
@@ -122,6 +125,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         this.ensureNotReadonly();
         if (payload.url) {
             this.listenIframe(Object.assign(this.attributes, payload));
+        }
+        if (payload.displaySceneDir) {
+            this.computedIframeDisplay(this.displayer.state, Object.assign(this.attributes, payload));
         }
         super.setAttributes(payload);
     }
@@ -166,9 +172,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         iframe.addEventListener("load", loadListener);
     }
 
-    private fllowCamera(): void {
+    private listenDisplayerState(): void {
         this.computedStyle(this.displayer.state);
-        this.computedIframeDisplay(this.displayer.state);
+        this.computedIframeDisplay(this.displayer.state, this.attributes);
         const callbackName = this.isReplay ? "onReplayStateChanged" : "onRoomStateChanged";
         this.displayer.callbacks.on(callbackName as any, (state: RoomState) => {
             this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
@@ -180,7 +186,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 this.updateStyle();
             }
             if (state.sceneState) {
-                this.computedIframeDisplay(state);
+                this.computedIframeDisplay(state, this.attributes);
             }
         });
     }
@@ -206,9 +212,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
     }
 
-    private computedIframeDisplay(state: DisplayerState): void {
+    private computedIframeDisplay(state: DisplayerState, attributes: IframeBridgeAttributes): void {
         if (this.iframe) {
-            if (!state.sceneState.scenePath.startsWith(this.attributes.displaySceneDir)) {
+            if (!state.sceneState.scenePath.startsWith(attributes.displaySceneDir)) {
                 this.iframe.classList.add(IframeBridge.hiddenClass);
             } else {
                 this.iframe.classList.remove(IframeBridge.hiddenClass);
