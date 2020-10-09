@@ -5,6 +5,7 @@
       "strictNullChecks": true,
       "sourceMap": true,
       "declaration": true,
+      "declarationMap": true,
       "noImplicitAny": true,
       "module": "ES6",
       "skipLibCheck": true,
