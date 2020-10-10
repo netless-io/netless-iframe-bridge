@@ -53,11 +53,11 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private static readonly hiddenClass: string = "netless-iframe-brdige-hidden";
     public static emitter: EventEmitter2 = new EventEmitter2();
     private static displayer: Displayer;
-    private styleDom: HTMLStyleElement;
+    private styleDom: HTMLStyleElement | null = null;
 
     public iframe: HTMLIFrameElement | null = null;
     private readonly magixEventMap: Map<string, (event: Event) => void> = new Map();
-    private cssList: string[];
+    private cssList: string[] = [];
 
     public constructor(context: InvisiblePluginContext) {
         super(context);
@@ -96,7 +96,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             height: options.height,
             displaySceneDir: options.displaySceneDir,
         };
-        const instance: any = await options.room.createInvisiblePlugin(IframeBridge, initAttributes);
+        const instance: any = await options.room.createInvisiblePlugin(IframeBridge as any, initAttributes);
         instance.baseInsert(options);
         return instance;
     }

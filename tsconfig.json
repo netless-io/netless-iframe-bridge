@@ -3,6 +3,7 @@
       "rootDir": "./src",
       "outDir": "dist",
       "strictNullChecks": true,
+      "strict": true,
       "sourceMap": true,
       "declaration": true,
       "declarationMap": true,
