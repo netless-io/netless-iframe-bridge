@@ -3,14 +3,14 @@ import {EventEmitter2} from "eventemitter2";
 
 export type IframeBridgeAttributes = {
     readonly url: string;
-    readonly width: number;
-    readonly height: number;
+    readonly width: string;
+    readonly height: string;
     readonly displaySceneDir: string;
 };
 
 export type IframeSize = {
-    readonly width: number;
-    readonly height: number;
+    readonly width: string;
+    readonly height: string;
 };
 
 export type InsertOptions = {
@@ -19,8 +19,8 @@ export type InsertOptions = {
 
 type BaseOption = {
     readonly url: string;
-    readonly width: number;
-    readonly height: number;
+    readonly width: string;
+    readonly height: string;
     readonly displaySceneDir: string;
 };
 
@@ -145,8 +145,8 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public setIframeSize(params: IframeSize): void {
         if (this.iframe) {
-            this.iframe.width = `${params.width}px`;
-            this.iframe.height = `${params.height}px`;
+            this.iframe.width = params.width;
+            this.iframe.height = params.height;
             this.setAttributes({ width: params.width, height: params.height });
         }
     }
@@ -166,8 +166,8 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
         this.iframe = iframe;
         iframe.src = options.url;
-        iframe.width = `${options.width}px`;
-        iframe.height = `${options.height}px`;
+        iframe.width = options.width;
+        iframe.height = options.height;
         window.addEventListener("message", this.messageListener.bind(this));
         iframe.addEventListener("load", loadListener);
     }
