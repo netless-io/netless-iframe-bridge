@@ -412,4 +412,4 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 }
 
-export * from "./IframeWrapper";
+export * from "./iframeWrapper";

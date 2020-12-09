@@ -7,10 +7,10 @@
 ## 安装
 ```
 # npm
-npm install netless-iframe-bridge
+npm install @netless/iframe-bridge
 
 # yarn
-yarn add netless-iframe-bridge
+yarn add @netless/iframe-bridge
 ```
 
 ## example
