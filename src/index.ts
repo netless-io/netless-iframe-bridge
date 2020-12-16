@@ -174,6 +174,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 roomState: IframeBridge.displayer.state,
             } });
             IframeBridge.emitter.emit(DomEvents.IframeLoad, ev);
+            this.scaleIframeToFit();
         };
         if (iframe.src) {
             window.removeEventListener("message", this.messageListener);
