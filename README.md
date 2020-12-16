@@ -104,3 +104,8 @@ room.setSceneIndex(room.state.sceneState.index + 1) // 下一页
 ```typescript
 bridge.setAttributes({ url: "https://xxxx.com" })
 ```
+
+### iframe 铺满屏幕
+```typescript
+bridge.scaleIframeToFit()
+```

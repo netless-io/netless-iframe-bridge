@@ -1,16 +1,16 @@
-import {InvisiblePlugin, Event, RoomState, InvisiblePluginContext, Displayer, Room, DisplayerState} from "white-web-sdk";
+import {InvisiblePlugin, Event, RoomState, InvisiblePluginContext, Displayer, Room, DisplayerState, AnimationMode} from "white-web-sdk";
 import {EventEmitter2} from "eventemitter2";
 
 export type IframeBridgeAttributes = {
     readonly url: string;
-    readonly width: string;
-    readonly height: string;
+    readonly width: number;
+    readonly height: number;
     readonly displaySceneDir: string;
 };
 
 export type IframeSize = {
-    readonly width: string;
-    readonly height: string;
+    readonly width: number;
+    readonly height: number;
 };
 
 export type InsertOptions = {
@@ -19,8 +19,8 @@ export type InsertOptions = {
 
 type BaseOption = {
     readonly url: string;
-    readonly width: string;
-    readonly height: string;
+    readonly width: number;
+    readonly height: number;
     readonly displaySceneDir: string;
 };
 
@@ -145,10 +145,25 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public setIframeSize(params: IframeSize): void {
         if (this.iframe) {
-            this.iframe.width = params.width;
-            this.iframe.height = params.height;
+            this.iframe.width = `${params.width}px`;
+            this.iframe.height = `${params.height}px`;
             this.setAttributes({ width: params.width, height: params.height });
         }
+    }
+
+    public scaleIframeToFit(animationMode: AnimationMode = AnimationMode.Immediately): void {
+        const x = - this.attributes.width / 2;
+        const y = - this.attributes.height / 2;
+        const width = this.attributes.width;
+        const height = this.attributes.height;
+
+        this.displayer.moveCameraToContain({
+            originX: x,
+            originY: y,
+            width,
+            height,
+            animationMode,
+        });
     }
 
     private listenIframe(options: BaseOption): void {
@@ -166,8 +181,8 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
         this.iframe = iframe;
         iframe.src = options.url;
-        iframe.width = options.width;
-        iframe.height = options.height;
+        iframe.width = options.width + "px";
+        iframe.height = options.height + "px";
         window.addEventListener("message", this.messageListener.bind(this));
         iframe.addEventListener("load", loadListener);
     }
@@ -194,16 +209,15 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private computedStyle(state: DisplayerState): void {
         const cameraState = state.cameraState;
         if (this.iframe) {
-            const { width, height } = cameraState;
             const position = "position: absolute;";
             const borderWidth = "border-width: 0px;";
             const transformOriginX = `${(cameraState.width / 2)}px`;
             const transformOriginY = `${(cameraState.height / 2)}px`;
-            const left = `left: ${(cameraState.width - width) / 2}px;`;
-            const top = `top: ${(cameraState.height - height) / 2}px;`;
+            const left = `left: 0px;`;
+            const top = `top: 0px;`;
             const transformOrigin = `transform-origin: ${transformOriginX} ${transformOriginY};`;
-            const x =  - (cameraState.centerX * cameraState.scale);
-            const y = - (cameraState.centerY * cameraState.scale);
+            const x =  - (cameraState.centerX * cameraState.scale) + ((cameraState.width - this.attributes.width) / 2);
+            const y = - (cameraState.centerY * cameraState.scale) + ((cameraState.height - this.attributes.height) / 2);
             const transform = `transform: translate(${x}px,${y}px) scale(${cameraState.scale}, ${cameraState.scale});`;
             const cssList = [position, borderWidth, top, left, transformOrigin, transform];
             this.cssList = cssList;
