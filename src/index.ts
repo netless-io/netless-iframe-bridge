@@ -209,16 +209,19 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private computedStyle(state: DisplayerState): void {
         const cameraState = state.cameraState;
         if (this.iframe) {
+            const {width, height, scale, centerX, centerY} = cameraState;
             const position = "position: absolute;";
             const borderWidth = "border-width: 0px;";
-            const transformOriginX = `${(cameraState.width / 2)}px`;
-            const transformOriginY = `${(cameraState.height / 2)}px`;
+            const transformOriginX = `${(width / 2)}px`;
+            const transformOriginY = `${(height / 2)}px`;
             const left = `left: 0px;`;
             const top = `top: 0px;`;
             const transformOrigin = `transform-origin: ${transformOriginX} ${transformOriginY};`;
-            const x =  - (cameraState.centerX * cameraState.scale) + ((cameraState.width - this.attributes.width) / 2);
-            const y = - (cameraState.centerY * cameraState.scale) + ((cameraState.height - this.attributes.height) / 2);
-            const transform = `transform: translate(${x}px,${y}px) scale(${cameraState.scale}, ${cameraState.scale});`;
+            const iframeXDiff = ((width - this.attributes.width) / 2) * scale;
+            const iframeYDiff = ((height - this.attributes.height) / 2) * scale;
+            const x =  - (centerX * scale) + iframeXDiff;
+            const y = - (centerY * scale) + iframeYDiff;
+            const transform = `transform: translate(${x}px,${y}px) scale(${scale}, ${scale});`;
             const cssList = [position, borderWidth, top, left, transformOrigin, transform];
             this.cssList = cssList;
             this.computedZindex();
