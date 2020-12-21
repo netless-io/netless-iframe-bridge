@@ -72,7 +72,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     public onAttributesUpdate(attributes: IframeBridgeAttributes): void {
-        if (attributes.url) {
+        if (this.attributes.url !== attributes.url) {
             this.listenIframe(this.attributes);
         }
         if (attributes.displaySceneDir) {
