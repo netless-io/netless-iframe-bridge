@@ -40,6 +40,7 @@ export enum IframeEvents {
     ReciveMagixEvent = "ReciveMagixEvent",
     NextPage = "NextPage",
     PrevPage = "PrevPage",
+    SDKCreate = "SDKCreate",
 }
 
 export enum DomEvents {
@@ -172,7 +173,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.postMessage({ kind: IframeEvents.Init, payload: {
                 attributes: this.attributes,
                 roomState: IframeBridge.displayer.state,
-            } });
+            }});
             IframeBridge.emitter.emit(DomEvents.IframeLoad, ev);
         };
         if (iframe.src) {
@@ -291,11 +292,22 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 this.handlePrevPage();
                 break;
             }
+            case IframeEvents.SDKCreate: {
+                this.handleSDKCreate();
+                break;
+            }
             default: {
                 console.warn(`${data.kind} not allow event.`);
                 break;
             }
         }
+    }
+
+    private handleSDKCreate(): void {
+        this.postMessage({ kind: IframeEvents.Init, payload: {
+            attributes: this.attributes,
+            roomState: IframeBridge.displayer.state,
+        }});
     }
 
     private handleDispatchMagixEvent(data: any): void {
