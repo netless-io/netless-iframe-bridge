@@ -55,6 +55,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     public static emitter: EventEmitter2 = new EventEmitter2();
     private static displayer: Displayer;
     private styleDom: HTMLStyleElement | null = null;
+    private static alreadyCreate: boolean = false;
 
     public iframe: HTMLIFrameElement | null = null;
     private readonly magixEventMap: Map<string, (event: Event) => void> = new Map();
@@ -68,7 +69,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     public static onCreate(plugin: IframeBridge): void {
         const attributes = plugin.attributes;
         if (attributes.url && attributes.height && attributes.width) {
-            plugin.insertByOnCreate({ ...attributes, displayer: this.displayer });
+            if (!IframeBridge.alreadyCreate) {
+                plugin.insertByOnCreate({ ...attributes, displayer: this.displayer });
+            }
         }
     }
 
@@ -97,6 +100,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             height: options.height,
             displaySceneDir: options.displaySceneDir,
         };
+        IframeBridge.alreadyCreate = true;
         const instance: any = await options.room.createInvisiblePlugin(IframeBridge as any, initAttributes);
         instance.baseInsert(options);
         return instance;
