@@ -193,35 +193,40 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     private listenDisplayerState(): void {
+        const computedStyleAndIframeDisplay = () => {
+            this.computedStyle(this.displayer.state);
+            this.computedIframeDisplay(this.displayer.state, this.attributes);
+        };
         if (this.isReplay) {
             let firstPlay = false;
+            if ((this.displayer as any)._phase === PlayerPhase.Playing) {
+                computedStyleAndIframeDisplay();
+                firstPlay = true;
+            }
             this.displayer.callbacks.on("onPhaseChanged", (phase: PlayerPhase) => {
                 if (phase === PlayerPhase.Playing) {
                     if (!firstPlay) {
-                        this.computedStyle(this.displayer.state);
-                        this.computedIframeDisplay(this.displayer.state, this.attributes);
+                        computedStyleAndIframeDisplay();
                     }
                     firstPlay = true;
                 }
             });
-        } else {
-            this.computedStyle(this.displayer.state);
-            this.computedIframeDisplay(this.displayer.state, this.attributes);
-            const callbackName = this.isReplay ? "onReplayStateChanged" : "onRoomStateChanged";
-            this.displayer.callbacks.on(callbackName as any, (state: RoomState) => {
-                this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
-                if (state.cameraState) {
-                    this.computedStyle(this.displayer.state);
-                }
-                if (state.memberState) {
-                    this.computedZindex();
-                    this.updateStyle();
-                }
-                if (state.sceneState) {
-                    this.computedIframeDisplay(state, this.attributes);
-                }
-            });
         }
+        computedStyleAndIframeDisplay();
+        const callbackName = this.isReplay ? "onPlayerStateChanged" : "onRoomStateChanged";
+        this.displayer.callbacks.on(callbackName as any, (state: RoomState) => {
+            this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
+            if (state.cameraState) {
+                this.computedStyle(this.displayer.state);
+            }
+            if (state.memberState) {
+                this.computedZindex();
+                this.updateStyle();
+            }
+            if (state.sceneState) {
+                this.computedIframeDisplay(state, this.attributes);
+            }
+        });
     }
 
     private computedStyle(state: DisplayerState): void {
