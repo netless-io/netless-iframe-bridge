@@ -82,6 +82,12 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         if (attributes.displaySceneDir) {
             this.computedIframeDisplay(this.displayer.state, attributes);
         }
+        if (attributes.width || attributes.height) {
+            if (this.iframe) {
+                this.iframe.width = `${attributes.width}px`;
+                this.iframe.height = `${attributes.height}px`;
+            }
+        }
         this.postMessage({ kind: IframeEvents.AttributesUpdate, payload: attributes });
     }
 
