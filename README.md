@@ -1,8 +1,8 @@
 # IframeBridge
 
-> 本项目主要用于转发白板的事件和属性到 `iframe`, 管理 `iframe` 的插入, 以及对白板的视角变化的跟随
+> 本项目主要用于桥接白板的事件和属性到 `iframe`, 管理 `iframe` 的插入, 以及对白板的视角变化的跟随
 
->注意, `iframe` 只有在教具为 `选择工具` 时候才能进行交互
+> 注意, `iframe` 只有在教具为 `选择工具` 时候才能进行交互
 
 ## 安装
 ```
@@ -16,7 +16,7 @@ yarn add @netless/iframe-bridge
 ## example
 
 ``` typescript
-import {WhiteWebSdk} from "white-react-sdk"
+import {WhiteWebSdk} from "white-web-sdk"
 import {IframeBridge, IframeWrapper} from "@netless/iframe-bridge"
 
 const sdk = new WhiteWebSdk({
@@ -42,11 +42,6 @@ if (!bridge) {
 }
 ```
 
-## `setIframeSize`
-```typescript
-bridge.setIframeSize({ width: 1200, height: 700 }) // 修改 iframe 的宽高
-```
-
 ## `attributes`
 `attributes` 是会在所有插件中同步的属性, 类似于白板中的 `globalState` 概念, 但是只是同步在所有的插件中
 ```typescript
@@ -61,12 +56,17 @@ bridge.attributes
 bridge.setAttributes({ name: "bridge" })
 ```
 
-## `on`
-监听 `iframe``load` 事件
+## `setIframeSize`
+```typescript
+bridge.setIframeSize({ width: 1200, height: 700 }) // 修改 iframe 的宽高
+```
+
+## 监听 `bridge` 的事件
+监听 `iframe` `load` 事件
 ```typescript
 import { DomEvents } from "@netless/iframe-bridge"
 
-bridge.on(DomEvents.IframeLoad, (event) => {
+IframeBridge.emitter.on(DomEvents.IframeLoad, (event) => {
     // code
 })
 ``` 
@@ -109,3 +109,49 @@ bridge.setAttributes({ url: "https://xxxx.com" })
 ```typescript
 bridge.scaleIframeToFit()
 ```
+
+### 在 `iframe` 中直接设置页数
+`IframeBridge` 会监听来自 `iframe` 的事件并进行处理
+
+并且只接受这种格式的数据
+```typescript
+{
+    kind: "event name",
+    payload: data
+}
+```
+
+在 `iframe` 中要直接设置白板到页数则需要 `postMessage` 到 `IframeBridge`
+```typescript
+parent.postMessage({
+    kind: "SetPage",
+    payload: 10 // 根据 h5 课件的页数自行设置
+})
+```
+
+### 插件事件
+
+| 事件名              | 解释                                                         |
+| ------------------- | ------------------------------------------------------------ |
+| Init                | 在 `iframe` `load`事件完成时发送 `init` 事件                 |
+| AttributesUpdate    | 插件的 `attributes` 更新时触发                               |
+| SetAttributes       | 监听来自于 `iframe` 的 `postMessage` 信息, 并设置来自 `SetAttributes` 事件的 `attributes` |
+| RegisterMagixEvent  | 注册白板的自定义事件                                         |
+| RemoveMagixEvent    | 移除白板的自定义事件                                         |
+| RemoveAllMagixEvent | 移除所有白板的自定义事件                                     |
+| DispatchMagixEvent  | 发送白板自定义事件                                           |
+| ReciveMagixEvent    | 接收到自定义事件                                             |
+| OnCreate            | 插件创建时发送事件                                           |
+| SetPage             | 设置白板的页数                                               |
+| GetAttributes       | 接收到此事件会发送一个同名事件到 `iframe` 中并带上当前的 `attributes` |
+
+
+
+### Dom 事件
+
+| 事件            | 解释                                         |
+| --------------- | -------------------------------------------- |
+| WrapperDidMount | `iframe` 的 `wrapper` 组件 `didMount` 时触发 |
+| IframeLoad      | `iframe` 的 `load` 事件触发                  |
+
+

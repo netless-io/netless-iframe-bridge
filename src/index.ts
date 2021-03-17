@@ -1,5 +1,6 @@
 import {InvisiblePlugin, Event, RoomState, InvisiblePluginContext, Displayer, Room, DisplayerState, AnimationMode, PlayerPhase} from "white-web-sdk";
-import {EventEmitter2} from "eventemitter2";
+import {EventEmitter2, ListenerFn} from "eventemitter2";
+import {times} from "./utils";
 
 export type IframeBridgeAttributes = {
     readonly url: string;
@@ -41,6 +42,9 @@ export enum IframeEvents {
     NextPage = "NextPage",
     PrevPage = "PrevPage",
     SDKCreate = "SDKCreate",
+    OnCreate = "OnCreate",
+    SetPage = "SetPage",
+    GetAttributes = "GetAttributes",
 }
 
 export enum DomEvents {
@@ -73,6 +77,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 plugin.insertByOnCreate({ ...attributes, displayer: this.displayer });
             }
         }
+        IframeBridge.emitter.emit(IframeEvents.OnCreate, plugin);
     }
 
     public onAttributesUpdate(attributes: IframeBridgeAttributes): void {
@@ -101,7 +106,8 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     public static async insert(options: InsertOptions): Promise<IframeBridge> {
         const plugin = options.room.getInvisiblePlugin(IframeBridge.kind);
         if (plugin) {
-            throw new Error("plugin already inserted, can't re-insert");
+            console.warn("plugin already inserted, can't re-insert");
+            return plugin as any;
         }
         const initAttributes: IframeBridgeAttributes = {
             url: options.url,
@@ -178,6 +184,19 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             height,
             animationMode,
         });
+    }
+
+    private handleSetPage(data: any): void {
+        if (this.isReplay) {
+            return;
+        }
+        const page = data.payload;
+        const room = this.displayer as Room;
+        const scenes = room.entireScenes()[this.attributes.displaySceneDir];
+        if (!scenes) {
+            room.putScenes(this.attributes.displaySceneDir, times(page, (index: number) => ({ name: index + 1 })));
+            room.setScenePath(this.attributes.displaySceneDir);
+        }
     }
 
     private listenIframe(options: BaseOption): void {
@@ -327,6 +346,14 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 this.handleSDKCreate();
                 break;
             }
+            case IframeEvents.SetPage: {
+                this.handleSetPage(data);
+                break;
+            }
+            case IframeEvents.GetAttributes: {
+                this.handleGetAttributes();
+                break;
+            }
             default: {
                 console.warn(`${data.kind} not allow event.`);
                 break;
@@ -393,6 +420,13 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.displayer.removeMagixEventListener(event, listener);
         });
         this.magixEventMap.clear();
+    }
+
+    private handleGetAttributes(): void {
+        this.postMessage({
+            kind: IframeEvents.GetAttributes,
+            payload: this.attributes,
+        });
     }
 
     private postMessage(message: any): void {
