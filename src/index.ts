@@ -296,7 +296,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         if (index !== -1) {
             this.cssList.splice(index, 1);
         }
-        if (!this.isSelector()) {
+        if (!this.isClicker()) {
             this.cssList.push(zIndexString);
         }
     }
@@ -466,11 +466,11 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
     }
 
-    private isSelector(): boolean {
+    private isClicker(): boolean {
         if (this.readonly) {
             return false;
         }
-        return (this.displayer as Room).state.memberState.currentApplianceName === "selector";
+        return (this.displayer as Room).state.memberState.currentApplianceName as string === "clicker";
     }
 
     private get iframeOrigin (): string {
