@@ -1,5 +1,5 @@
 import {InvisiblePlugin, Event, RoomState, InvisiblePluginContext, Displayer, Room, DisplayerState, AnimationMode, PlayerPhase} from "white-web-sdk";
-import {EventEmitter2, ListenerFn} from "eventemitter2";
+import {EventEmitter2} from "eventemitter2";
 import {times} from "./utils";
 
 export type IframeBridgeAttributes = {
