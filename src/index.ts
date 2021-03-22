@@ -7,6 +7,7 @@ export type IframeBridgeAttributes = {
     readonly width: number;
     readonly height: number;
     readonly displaySceneDir: string;
+    readonly lastEvent?: { name: string, payload: any };
 };
 
 export type IframeSize = {
@@ -131,6 +132,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.getIframe();
             this.listenIframe(options);
             this.listenDisplayerState();
+            this.postMessage(this.attributes.lastEvent?.payload);
         };
         if (this.getIframe()) {
             wrapperDidMountListener();
@@ -371,6 +373,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private handleDispatchMagixEvent(data: any): void {
         const eventPayload = data.payload;
         this.dispatchMagixEvent(eventPayload.event, eventPayload.payload);
+
     }
 
     private handleSetAttributes(data: any): void {
@@ -437,6 +440,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     private dispatchMagixEvent(event: string, payload: any): void {
         this.ensureNotReadonly();
+        super.setAttributes({ lastEvent: { name: event, payload } });
         (this.displayer as any).dispatchMagixEvent(event, payload);
     }
 
