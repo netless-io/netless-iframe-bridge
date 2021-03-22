@@ -1,5 +1,5 @@
 import {InvisiblePlugin, Event, RoomState, InvisiblePluginContext, Displayer, Room, DisplayerState, AnimationMode, PlayerPhase} from "white-web-sdk";
-import {EventEmitter2, ListenerFn} from "eventemitter2";
+import {EventEmitter2} from "eventemitter2";
 import {times} from "./utils";
 
 export type IframeBridgeAttributes = {
@@ -7,6 +7,7 @@ export type IframeBridgeAttributes = {
     readonly width: number;
     readonly height: number;
     readonly displaySceneDir: string;
+    readonly lastEvent?: { name: string, payload: any };
 };
 
 export type IframeSize = {
@@ -131,6 +132,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.getIframe();
             this.listenIframe(options);
             this.listenDisplayerState();
+            this.postMessage(this.attributes.lastEvent?.payload);
         };
         if (this.getIframe()) {
             wrapperDidMountListener();
@@ -296,7 +298,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         if (index !== -1) {
             this.cssList.splice(index, 1);
         }
-        if (!this.isSelector()) {
+        if (!this.isClicker()) {
             this.cssList.push(zIndexString);
         }
     }
@@ -371,6 +373,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private handleDispatchMagixEvent(data: any): void {
         const eventPayload = data.payload;
         this.dispatchMagixEvent(eventPayload.event, eventPayload.payload);
+
     }
 
     private handleSetAttributes(data: any): void {
@@ -437,6 +440,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     private dispatchMagixEvent(event: string, payload: any): void {
         this.ensureNotReadonly();
+        super.setAttributes({ lastEvent: { name: event, payload } });
         (this.displayer as any).dispatchMagixEvent(event, payload);
     }
 
@@ -466,11 +470,11 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
     }
 
-    private isSelector(): boolean {
+    private isClicker(): boolean {
         if (this.readonly) {
             return false;
         }
-        return (this.displayer as Room).state.memberState.currentApplianceName === "selector";
+        return (this.displayer as Room).state.memberState.currentApplianceName as string === "clicker";
     }
 
     private get iframeOrigin (): string {
