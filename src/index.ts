@@ -46,6 +46,7 @@ export enum IframeEvents {
     OnCreate = "OnCreate",
     SetPage = "SetPage",
     GetAttributes = "GetAttributes",
+    Ready = "Ready",
 }
 
 export enum DomEvents {
@@ -132,7 +133,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.getIframe();
             this.listenIframe(options);
             this.listenDisplayerState();
-            this.postMessage(this.attributes.lastEvent?.payload);
         };
         if (this.getIframe()) {
             wrapperDidMountListener();
@@ -209,6 +209,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 roomState: IframeBridge.displayer.state,
             }});
             IframeBridge.emitter.emit(DomEvents.IframeLoad, ev);
+            IframeBridge.emitter.on(IframeEvents.Ready, () => {
+                this.postMessage(this.attributes.lastEvent?.payload);
+            });
         };
         if (iframe.src) {
             window.removeEventListener("message", this.messageListener);
@@ -438,7 +441,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
     }
 
-    private dispatchMagixEvent(event: string, payload: any): void {
+    public dispatchMagixEvent(event: string, payload: any): void {
         this.ensureNotReadonly();
         super.setAttributes({ lastEvent: { name: event, payload } });
         (this.displayer as any).dispatchMagixEvent(event, payload);
