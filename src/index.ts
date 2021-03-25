@@ -8,6 +8,7 @@ export type IframeBridgeAttributes = {
     readonly height: number;
     readonly displaySceneDir: string;
     readonly lastEvent?: { name: string, payload: any };
+    readonly useClicker?: boolean;
 };
 
 export type IframeSize = {
@@ -17,6 +18,7 @@ export type IframeSize = {
 
 export type InsertOptions = {
     readonly room: Room;
+    readonly useClicker: boolean,
 } & BaseOption;
 
 type BaseOption = {
@@ -47,6 +49,8 @@ export enum IframeEvents {
     SetPage = "SetPage",
     GetAttributes = "GetAttributes",
     Ready = "Ready",
+    Destory = "Destory",
+    StartCreate = "StartCreate",
 }
 
 export enum DomEvents {
@@ -73,6 +77,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     public static onCreate(plugin: IframeBridge): void {
+        IframeBridge.emitter.emit(IframeEvents.StartCreate);
         const attributes = plugin.attributes;
         if (attributes.url && attributes.height && attributes.width) {
             if (!IframeBridge.alreadyCreate) {
@@ -116,6 +121,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             width: options.width,
             height: options.height,
             displaySceneDir: options.displaySceneDir,
+            useClicker: options.useClicker || false,
         };
         IframeBridge.alreadyCreate = true;
         const instance: any = await options.room.createInvisiblePlugin(IframeBridge as any, initAttributes);
@@ -467,6 +473,10 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         return "isPlayable" in (this.displayer as any);
     }
 
+    public get canDisplay(): boolean {
+        return this.displayer.state.sceneState.scenePath.startsWith(this.attributes.displaySceneDir);
+    }
+
     private ensureNotReadonly(): void {
         if (this.readonly) {
             throw new Error("readOnly mode cannot invoke this method");
@@ -477,7 +487,8 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         if (this.readonly) {
             return false;
         }
-        return (this.displayer as Room).state.memberState.currentApplianceName as string === "clicker";
+        const applianceName = this.attributes.useClicker ? "clicker" : "selector";
+        return (this.displayer as Room).state.memberState.currentApplianceName === applianceName;
     }
 
     private get iframeOrigin (): string {
@@ -504,7 +515,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         });
         this.magixEventMap.clear();
         if (this.iframe) {
-            this.iframe.parentNode?.removeChild(this.iframe);
+            IframeBridge.emitter.emit(IframeEvents.Destory);
             this.iframe = null;
         }
         if (this.styleDom) {
