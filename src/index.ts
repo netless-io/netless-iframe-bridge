@@ -51,6 +51,7 @@ export enum IframeEvents {
     Ready = "Ready",
     Destory = "Destory",
     StartCreate = "StartCreate",
+    WrapperDidUpdate = "WrapperDidUpdate",
 }
 
 export enum DomEvents {
@@ -144,6 +145,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             wrapperDidMountListener();
         } else {
             IframeBridge.emitter.once(DomEvents.WrapperDidMount, wrapperDidMountListener);
+            IframeBridge.emitter.once(IframeEvents.WrapperDidUpdate, wrapperDidMountListener);
         }
         this.injectCss();
         return this;
@@ -517,6 +519,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         if (this.iframe) {
             IframeBridge.emitter.emit(IframeEvents.Destory);
             this.iframe = null;
+            IframeBridge.alreadyCreate = false;
         }
         if (this.styleDom) {
             this.styleDom.parentNode?.removeChild(this.styleDom);
