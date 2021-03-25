@@ -24,6 +24,10 @@ export class IframeWrapper extends React.Component<{}, IframeWrapperState> {
         });
     }
 
+    public componentDidUpdate(): void {
+        IframeBridge.emitter.emit(IframeEvents.WrapperDidUpdate);
+    }
+
     public render(): React.ReactNode {
         return <React.Fragment>
             {this.props.children}
