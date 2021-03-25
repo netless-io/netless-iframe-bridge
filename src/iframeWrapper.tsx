@@ -1,15 +1,33 @@
 import * as React from "react";
-import { IframeBridge, DomEvents } from "./index";
+import { IframeBridge, DomEvents, IframeEvents } from "./index";
 
-export class IframeWrapper extends React.Component {
+type IframeWrapperState = {
+    canDisplay: boolean;
+};
+
+export class IframeWrapper extends React.Component<{}, IframeWrapperState> {
+
+    public constructor(props: {}) {
+        super(props);
+        this.state = {
+            canDisplay: true,
+        };
+    }
+
     public componentDidMount(): void {
         IframeBridge.emitter.emit(DomEvents.WrapperDidMount);
+        IframeBridge.emitter.on(IframeEvents.Destory, () => {
+            this.setState({ canDisplay: false });
+        });
+        IframeBridge.emitter.on(IframeEvents.StartCreate, () => {
+            this.setState({ canDisplay: true });
+        });
     }
 
     public render(): React.ReactNode {
         return <React.Fragment>
             {this.props.children}
-            <iframe id={IframeBridge.kind} />
+            {this.state.canDisplay && <iframe id={IframeBridge.kind}></iframe>}
         </React.Fragment>;
     }
 }
