@@ -18,7 +18,7 @@ export type IframeSize = {
 
 export type InsertOptions = {
     readonly room: Room;
-    readonly useClicker: boolean,
+    readonly useClicker?: boolean;
 } & BaseOption;
 
 type BaseOption = {
@@ -182,6 +182,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     public scaleIframeToFit(animationMode: AnimationMode = AnimationMode.Immediately): void {
+        if (!this.inDisplaySceneDir) {
+            return;
+        }
         const x = - this.attributes.width / 2;
         const y = - this.attributes.height / 2;
         const width = this.attributes.width;
@@ -475,7 +478,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         return "isPlayable" in (this.displayer as any);
     }
 
-    public get canDisplay(): boolean {
+    public get inDisplaySceneDir(): boolean {
         return this.displayer.state.sceneState.scenePath.startsWith(this.attributes.displaySceneDir);
     }
 
