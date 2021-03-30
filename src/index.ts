@@ -52,6 +52,8 @@ export enum IframeEvents {
     Destory = "Destory",
     StartCreate = "StartCreate",
     WrapperDidUpdate = "WrapperDidUpdate",
+    DispayIframe = "DispayIframe",
+    HideIframe = "HideIframe",
 }
 
 export enum DomEvents {
@@ -62,10 +64,8 @@ export enum DomEvents {
 export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public static readonly kind: string = "IframeBridge";
-    private static readonly hiddenClass: string = "netless-iframe-brdige-hidden";
     public static emitter: EventEmitter2 = new EventEmitter2();
     private static displayer: Displayer;
-    private styleDom: HTMLStyleElement | null = null;
     private static alreadyCreate: boolean = false;
 
     public iframe: HTMLIFrameElement | null = null;
@@ -147,7 +147,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             IframeBridge.emitter.once(DomEvents.WrapperDidMount, wrapperDidMountListener);
             IframeBridge.emitter.once(IframeEvents.WrapperDidUpdate, wrapperDidMountListener);
         }
-        this.injectCss();
         return this;
     }
 
@@ -299,9 +298,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private computedIframeDisplay(state: DisplayerState, attributes: IframeBridgeAttributes): void {
         if (this.iframe) {
             if (!state.sceneState.scenePath.startsWith(attributes.displaySceneDir)) {
-                this.iframe.classList.add(IframeBridge.hiddenClass);
+                IframeBridge.emitter.emit(IframeEvents.HideIframe);
             } else {
-                this.iframe.classList.remove(IframeBridge.hiddenClass);
+                IframeBridge.emitter.emit(IframeEvents.DispayIframe);
             }
         }
     }
@@ -501,18 +500,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         return url.origin;
     }
 
-    private injectCss(): void {
-        const styleDom = document.createElement("style");
-        const styleStr = `
-            .${IframeBridge.hiddenClass} {
-                display: none;
-            }
-        `;
-        this.styleDom = styleDom;
-        styleDom.appendChild(document.createTextNode(styleStr));
-        document.getElementsByTagName("head")[0].appendChild(styleDom);
-    }
-
     private _destory(): void {
         window.removeEventListener("message", this.messageListener);
         this.magixEventMap.forEach((listener, event) => {
@@ -523,9 +510,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             IframeBridge.emitter.emit(IframeEvents.Destory);
             this.iframe = null;
             IframeBridge.alreadyCreate = false;
-        }
-        if (this.styleDom) {
-            this.styleDom.parentNode?.removeChild(this.styleDom);
         }
     }
 }
