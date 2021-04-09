@@ -72,7 +72,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     public static emitter: EventEmitter2 = new EventEmitter2();
     private static displayer: Displayer;
     private static alreadyCreate: boolean = false;
-    private static alreadyListenDisplayState: boolean = false;
 
     public iframe: HTMLIFrameElement | null = null;
     private readonly magixEventMap: Map<string, (event: Event) => void> = new Map();
@@ -153,6 +152,10 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             IframeBridge.emitter.once(DomEvents.WrapperDidMount, wrapperDidMountListener);
             IframeBridge.emitter.once(IframeEvents.WrapperDidUpdate, wrapperDidMountListener);
         }
+        setTimeout(() => { // 这个时候访问 displayer.state 会报错, 需要加一个 timeout 延迟访问
+            this.computedStyle(this.displayer.state);
+            this.listenDisplayerCallbacks();
+        }, 10);
         return this;
     }
 
@@ -228,6 +231,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             IframeBridge.emitter.on(IframeEvents.Ready, () => {
                 this.postMessage(this.attributes.lastEvent?.payload);
             });
+            this.computedStyleAndIframeDisplay();
         };
         if (iframe.src) {
             window.removeEventListener("message", this.messageListener);
@@ -258,7 +262,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             });
         }
         this.computedStyleAndIframeDisplay();
-        this.listenDisplayerCallbacks();
     }
 
     private computedStyleAndIframeDisplay(): void {
@@ -267,23 +270,20 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     private listenDisplayerCallbacks(): void {
-        if (!IframeBridge.alreadyListenDisplayState) {
-            const callbackName = this.isReplay ? "onPlayerStateChanged" : "onRoomStateChanged";
-            this.displayer.callbacks.on(callbackName as any, (state: RoomState) => {
-                this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
-                if (state.cameraState) {
-                    this.computedStyle(this.displayer.state);
-                }
-                if (state.memberState) {
-                    this.computedZindex();
-                    this.updateStyle();
-                }
-                if (state.sceneState) {
-                    this.computedIframeDisplay(state, this.attributes);
-                }
-            });
-            IframeBridge.alreadyListenDisplayState = true;
-        }
+        const callbackName = this.isReplay ? "onPlayerStateChanged" : "onRoomStateChanged";
+        this.displayer.callbacks.on(callbackName as any, (state: RoomState) => {
+            this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
+            if (state.cameraState) {
+                this.computedStyle(state);
+            }
+            if (state.memberState) {
+                this.computedZindex();
+                this.updateStyle();
+            }
+            if (state.sceneState) {
+                this.computedIframeDisplay(state, this.attributes);
+            }
+        });
     }
 
     private computedStyle(state: DisplayerState): void {
@@ -378,7 +378,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 break;
             }
             default: {
-                console.warn(`${data.kind} not allow event.`);
+                // console.warn(`${data.kind} not allow event.`);
                 break;
             }
         }
@@ -519,7 +519,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.iframe = null;
             IframeBridge.alreadyCreate = false;
         }
-        IframeBridge.alreadyListenDisplayState = false;
     }
 }
 
