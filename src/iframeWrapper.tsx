@@ -17,10 +17,6 @@ export class IframeWrapper extends React.Component<{}, IframeWrapperState> {
             className: IframeWrapper.hiddenClass,
         };
         this.injectCss();
-    }
-
-    public componentDidMount(): void {
-        IframeBridge.emitter.emit(DomEvents.WrapperDidMount);
         IframeBridge.emitter.on(IframeEvents.Destory, () => {
             this.setState({ canDisplay: false });
         });
@@ -33,6 +29,10 @@ export class IframeWrapper extends React.Component<{}, IframeWrapperState> {
         IframeBridge.emitter.on(IframeEvents.HideIframe, () => {
             this.setState({ className: IframeWrapper.hiddenClass });
         });
+    }
+
+    public componentDidMount(): void {
+        IframeBridge.emitter.emit(DomEvents.WrapperDidMount);
     }
 
     public componentWillUnmount(): void {

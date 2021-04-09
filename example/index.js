@@ -17,14 +17,16 @@ whiteWebSdk.joinRoom(joinRoomParams).then(function(room) {
     // 并将之前的 <div id="whiteboard"/> 占位符变成白板
     room.bindHtmlElement(document.getElementById("whiteboard"));
     window.room = room
-    IframeBridge.insert({ // 插件插入到白板中
-        room,
-        width: 1280,
-        height: 720,
-        url: "http://localhost:5000", // iframe url
-        displaySceneDir: "/example"
-    })
-
+    const bridge = room.getInvisiblePlugin(IframeBridge.kind);
+    if (!bridge) {
+        IframeBridge.insert({ // 插件插入到白板中
+            room,
+            width: 1280,
+            height: 720,
+            url: "http://localhost:5000", // iframe url
+            displaySceneDir: "/example"
+        })
+    }
 }).catch(function(err) {
     // 加入房间失败
     console.error(err);
