@@ -61,12 +61,18 @@ export enum DomEvents {
     IframeLoad = "IframeLoad",
 }
 
+const position = "position: absolute;";
+const borderWidth = "border-width: 0px;";
+const left = `left: 0px;`;
+const top = `top: 0px;`;
+
 export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public static readonly kind: string = "IframeBridge";
     public static emitter: EventEmitter2 = new EventEmitter2();
     private static displayer: Displayer;
     private static alreadyCreate: boolean = false;
+    private static alreadyListenDisplayState: boolean = false;
 
     public iframe: HTMLIFrameElement | null = null;
     private readonly magixEventMap: Map<string, (event: Event) => void> = new Map();
@@ -236,52 +242,56 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     private listenDisplayerState(): void {
-        const computedStyleAndIframeDisplay = () => {
-            this.computedStyle(this.displayer.state);
-            this.computedIframeDisplay(this.displayer.state, this.attributes);
-        };
         if (this.isReplay) {
             let firstPlay = false;
             if ((this.displayer as any)._phase === PlayerPhase.Playing) {
-                computedStyleAndIframeDisplay();
+                this.computedStyleAndIframeDisplay();
                 firstPlay = true;
             }
             this.displayer.callbacks.on("onPhaseChanged", (phase: PlayerPhase) => {
                 if (phase === PlayerPhase.Playing) {
                     if (!firstPlay) {
-                        computedStyleAndIframeDisplay();
+                        this.computedStyleAndIframeDisplay();
                     }
                     firstPlay = true;
                 }
             });
         }
-        computedStyleAndIframeDisplay();
-        const callbackName = this.isReplay ? "onPlayerStateChanged" : "onRoomStateChanged";
-        this.displayer.callbacks.on(callbackName as any, (state: RoomState) => {
-            this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
-            if (state.cameraState) {
-                this.computedStyle(this.displayer.state);
-            }
-            if (state.memberState) {
-                this.computedZindex();
-                this.updateStyle();
-            }
-            if (state.sceneState) {
-                this.computedIframeDisplay(state, this.attributes);
-            }
-        });
+        this.computedStyleAndIframeDisplay();
+        this.listenDisplayerCallbacks();
+    }
+
+    private computedStyleAndIframeDisplay(): void {
+        this.computedStyle(this.displayer.state);
+        this.computedIframeDisplay(this.displayer.state, this.attributes);
+    }
+
+    private listenDisplayerCallbacks(): void {
+        if (!IframeBridge.alreadyListenDisplayState) {
+            const callbackName = this.isReplay ? "onPlayerStateChanged" : "onRoomStateChanged";
+            this.displayer.callbacks.on(callbackName as any, (state: RoomState) => {
+                this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
+                if (state.cameraState) {
+                    this.computedStyle(this.displayer.state);
+                }
+                if (state.memberState) {
+                    this.computedZindex();
+                    this.updateStyle();
+                }
+                if (state.sceneState) {
+                    this.computedIframeDisplay(state, this.attributes);
+                }
+            });
+            IframeBridge.alreadyListenDisplayState = true;
+        }
     }
 
     private computedStyle(state: DisplayerState): void {
         const cameraState = state.cameraState;
         if (this.iframe) {
             const {width, height, scale, centerX, centerY} = cameraState;
-            const position = "position: absolute;";
-            const borderWidth = "border-width: 0px;";
             const transformOriginX = `${(width / 2)}px`;
             const transformOriginY = `${(height / 2)}px`;
-            const left = `left: 0px;`;
-            const top = `top: 0px;`;
             const transformOrigin = `transform-origin: ${transformOriginX} ${transformOriginY};`;
             const iframeXDiff = ((width - this.attributes.width) / 2) * scale;
             const iframeYDiff = ((height - this.attributes.height) / 2) * scale;
@@ -296,12 +306,10 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     private computedIframeDisplay(state: DisplayerState, attributes: IframeBridgeAttributes): void {
-        if (this.iframe) {
-            if (!state.sceneState.scenePath.startsWith(attributes.displaySceneDir)) {
-                IframeBridge.emitter.emit(IframeEvents.HideIframe);
-            } else {
-                IframeBridge.emitter.emit(IframeEvents.DispayIframe);
-            }
+        if (!state.sceneState.scenePath.startsWith(attributes.displaySceneDir)) {
+            IframeBridge.emitter.emit(IframeEvents.HideIframe);
+        } else {
+            IframeBridge.emitter.emit(IframeEvents.DispayIframe);
         }
     }
 
@@ -511,6 +519,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.iframe = null;
             IframeBridge.alreadyCreate = false;
         }
+        IframeBridge.alreadyListenDisplayState = false;
     }
 }
 
