@@ -156,7 +156,17 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.computedStyle(this.displayer.state);
             this.listenDisplayerCallbacks();
         }, 10);
+        this.getComputedIframeStyle();
         return this;
+    }
+
+    // 在某些安卓机型中会遇到 iframe 嵌套计算 bug，需要手动延迟触发一下重绘
+    private getComputedIframeStyle(): void {
+        setTimeout(() => {
+            if (this.iframe) {
+                getComputedStyle(this.iframe);
+            }
+        }, 200);
     }
 
     public setAttributes(payload: any): void {
