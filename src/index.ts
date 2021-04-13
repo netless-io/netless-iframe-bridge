@@ -63,7 +63,7 @@ export enum DomEvents {
 
 const position = "position: absolute;";
 // 在某些安卓机型, border-width 不为 0 时，才能正确计算 iframe 里嵌套 iframe 的大小
-const borderWidth = "border-width: 0.1px;";
+const borderWidth = "border: 0.1px solid rgba(0,0,0,0);";
 const left = `left: 0px;`;
 const top = `top: 0px;`;
 
@@ -158,6 +158,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.listenDisplayerCallbacks();
         }, 10);
         this.getComputedIframeStyle();
+        window.addEventListener("message", this.messageListener.bind(this));
         return this;
     }
 
@@ -245,14 +246,12 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.computedStyleAndIframeDisplay();
         };
         if (iframe.src) {
-            window.removeEventListener("message", this.messageListener);
             iframe.removeEventListener("load", loadListener);
         }
         this.iframe = iframe;
         iframe.src = options.url;
         iframe.width = options.width + "px";
         iframe.height = options.height + "px";
-        window.addEventListener("message", this.messageListener.bind(this));
         iframe.addEventListener("load", loadListener);
     }
 
