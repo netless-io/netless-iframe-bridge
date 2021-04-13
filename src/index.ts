@@ -226,7 +226,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         const page = data.payload;
         const room = this.displayer as Room;
         const scenes = room.entireScenes()[this.attributes.displaySceneDir];
-        if (!scenes) {
+        if (!scenes || scenes.length !== page) {
             room.putScenes(this.attributes.displaySceneDir, times(page, (index: number) => ({ name: index + 1 })));
             room.setScenePath(this.attributes.displaySceneDir);
         }
