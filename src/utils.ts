@@ -1,3 +1,3 @@
-export const times = (number: number, iteratee: (value: number) => any) => {
-    return new Array(number).fill(0).map(value => iteratee(value));
+export const times = <T>(number: number, iteratee: (value: number) => T) => {
+    return new Array(number).fill(0).map((_, index) => iteratee(index));
 };
