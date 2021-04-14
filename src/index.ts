@@ -143,9 +143,11 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public baseInsert(options: BaseOption): IframeBridge {
         const wrapperDidMountListener = () => {
-            this.getIframe();
-            this.listenIframe(options);
-            this.listenDisplayerState();
+            setTimeout(() => { // 临时修复访问 state 错误
+                this.getIframe();
+                this.listenIframe(options);
+                this.listenDisplayerState();
+            }, 50);
         };
         if (this.getIframe()) {
             wrapperDidMountListener();
