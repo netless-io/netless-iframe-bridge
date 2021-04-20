@@ -516,9 +516,13 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         return (this.displayer as Room).state.memberState.currentApplianceName === applianceName;
     }
 
-    private get iframeOrigin (): string {
-        const url = new URL(this.iframe!.src);
-        return url.origin;
+    private get iframeOrigin (): string | undefined {
+        if (this.iframe) {
+            const url = new URL(this.iframe.src);
+            return url.origin;
+        } else {
+            return undefined;
+        }
     }
 
     private _destory(): void {
