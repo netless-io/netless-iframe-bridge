@@ -143,11 +143,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public baseInsert(options: BaseOption): IframeBridge {
         const wrapperDidMountListener = () => {
-            setTimeout(() => { // 临时修复访问 state 错误
-                this.getIframe();
-                this.listenIframe(options);
-                this.listenDisplayerState();
-            }, 50);
+            this.getIframe();
+            this.listenIframe(options);
+            this.listenDisplayerState();
         };
         if (this.getIframe()) {
             wrapperDidMountListener();
@@ -155,10 +153,8 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             IframeBridge.emitter.once(DomEvents.WrapperDidMount, wrapperDidMountListener);
             IframeBridge.emitter.once(IframeEvents.WrapperDidUpdate, wrapperDidMountListener);
         }
-        setTimeout(() => { // 这个时候访问 displayer.state 会报错, 需要加一个 timeout 延迟访问
-            this.computedStyle(this.displayer.state);
-            this.listenDisplayerCallbacks();
-        }, 10);
+        this.computedStyle(this.displayer.state);
+        this.listenDisplayerCallbacks();
         this.getComputedIframeStyle();
         window.addEventListener("message", this.messageListener.bind(this));
         return this;
@@ -258,6 +254,12 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         iframe.addEventListener("load", loadListener);
     }
 
+    private onPhaseChangedListener = (phase: PlayerPhase) => {
+        if (phase === PlayerPhase.Playing) {
+            this.computedStyleAndIframeDisplay();
+        }
+    }
+
     private listenDisplayerState(): void {
         if (this.isReplay) {
             let firstPlay = false;
@@ -265,17 +267,12 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 this.computedStyleAndIframeDisplay();
                 firstPlay = true;
             }
-            this.displayer.callbacks.on("onPhaseChanged", (phase: PlayerPhase) => {
-                if (phase === PlayerPhase.Playing) {
-                    if (!firstPlay) {
-                        this.computedStyleAndIframeDisplay();
-                    }
-                    firstPlay = true;
-                }
-            });
+            this.displayer.callbacks.on("onPhaseChanged", this.onPhaseChangedListener);
         }
         this.computedStyleAndIframeDisplay();
     }
+
+
 
     private computedStyleAndIframeDisplay(): void {
         this.computedStyle(this.displayer.state);
@@ -283,20 +280,25 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     }
 
     private listenDisplayerCallbacks(): void {
-        const callbackName = this.isReplay ? "onPlayerStateChanged" : "onRoomStateChanged";
-        this.displayer.callbacks.on(callbackName as any, (state: RoomState) => {
-            this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
-            if (state.cameraState) {
-                this.computedStyle(state);
-            }
-            if (state.memberState) {
-                this.computedZindex();
-                this.updateStyle();
-            }
-            if (state.sceneState) {
-                this.computedIframeDisplay(state, this.attributes);
-            }
-        });
+        this.displayer.callbacks.on(this.callbackName as any, this.stateChangeListener);
+    }
+
+    private get callbackName(): string {
+        return this.isReplay ? "onPlayerStateChanged" : "onRoomStateChanged";
+    }
+
+    private stateChangeListener = (state: RoomState) => {
+        this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
+        if (state.cameraState) {
+            this.computedStyle(state);
+        }
+        if (state.memberState) {
+            this.computedZindex();
+            this.updateStyle();
+        }
+        if (state.sceneState) {
+            this.computedIframeDisplay(state, this.attributes);
+        }
     }
 
     private computedStyle(state: DisplayerState): void {
@@ -530,6 +532,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         this.magixEventMap.forEach((listener, event) => {
             this.displayer.removeMagixEventListener(event, listener);
         });
+
+        this.displayer.callbacks.off(this.callbackName, this.stateChangeListener);
+        this.displayer.callbacks.off("onPhaseChanged", this.onPhaseChangedListener);
         this.magixEventMap.clear();
         if (this.iframe) {
             IframeBridge.emitter.emit(IframeEvents.Destory);
