@@ -347,7 +347,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     private messageListener(event: MessageEvent): void {
         if (event.origin !== this.iframeOrigin) {
-            console.warn(`message origin: ${event.origin} not current iframe origin`);
             return;
         }
         const data = event.data;
