@@ -143,9 +143,11 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public baseInsert(options: BaseOption): IframeBridge {
         const wrapperDidMountListener = () => {
-            this.getIframe();
-            this.listenIframe(options);
-            this.listenDisplayerState();
+            setTimeout(() => {
+                this.getIframe();
+                this.listenIframe(options);
+                this.listenDisplayerState();
+            }, 50)
         };
         if (this.getIframe()) {
             wrapperDidMountListener();
@@ -153,8 +155,10 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             IframeBridge.emitter.once(DomEvents.WrapperDidMount, wrapperDidMountListener);
             IframeBridge.emitter.once(IframeEvents.WrapperDidUpdate, wrapperDidMountListener);
         }
-        this.computedStyle(this.displayer.state);
-        this.listenDisplayerCallbacks();
+        setTimeout(() => { // 这个时候访问 displayer.state 会报错, 需要加一个 timeout 延迟访问
+            this.computedStyle(this.displayer.state);
+            this.listenDisplayerCallbacks();
+        }, 50);
         this.getComputedIframeStyle();
         window.addEventListener("message", this.messageListener.bind(this));
         return this;
