@@ -9,6 +9,7 @@ export type IframeBridgeAttributes = {
     readonly displaySceneDir: string;
     readonly lastEvent?: { name: string, payload: any };
     readonly useClicker?: boolean;
+    readonly useSelector?: boolean;
 };
 
 export type IframeSize = {
@@ -19,6 +20,7 @@ export type IframeSize = {
 export type InsertOptions = {
     readonly room: Room;
     readonly useClicker?: boolean;
+    readonly useSelector?: boolean;
 } & BaseOption;
 
 type BaseOption = {
@@ -77,6 +79,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     public iframe: HTMLIFrameElement | null = null;
     private readonly magixEventMap: Map<string, (event: Event) => void> = new Map();
     private cssList: string[] = [];
+    private allowAppliances = ["clicker"];
 
     public constructor(context: InvisiblePluginContext) {
         super(context);
@@ -129,6 +132,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             height: options.height,
             displaySceneDir: options.displaySceneDir,
             useClicker: options.useClicker || false,
+            useSelector: options.useSelector,
         };
         IframeBridge.alreadyCreate = true;
         const instance: any = await options.room.createInvisiblePlugin(IframeBridge as any, initAttributes);
@@ -152,6 +156,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         } else {
             IframeBridge.emitter.once(DomEvents.WrapperDidMount, wrapperDidMountListener);
             IframeBridge.emitter.once(IframeEvents.WrapperDidUpdate, wrapperDidMountListener);
+        }
+        if (this.attributes.useSelector) {
+            this.allowAppliances.push("selector");
         }
         this.computedStyle(this.displayer.state);
         this.listenDisplayerCallbacks();
@@ -513,8 +520,8 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         if (this.readonly) {
             return false;
         }
-        const applianceName = this.attributes.useClicker ? "clicker" : "selector";
-        return (this.displayer as Room).state.memberState.currentApplianceName === applianceName;
+        const currentApplianceName = (this.displayer as Room).state.memberState.currentApplianceName;
+        return this.allowAppliances.includes(currentApplianceName);
     }
 
     private get iframeOrigin (): string | undefined {
