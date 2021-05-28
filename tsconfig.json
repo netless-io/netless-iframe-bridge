@@ -10,7 +10,7 @@
       "noImplicitAny": true,
       "module": "ES6",
       "skipLibCheck": true,
-      "target": "es6",
+      "target": "es5",
       "jsx": "react",
       "forceConsistentCasingInFileNames": false,
       "lib": [
