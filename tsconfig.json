@@ -15,7 +15,8 @@
       "forceConsistentCasingInFileNames": false,
       "lib": [
         "es6",
-        "dom"
+        "dom",
+        "ES2016"
       ],
       "allowSyntheticDefaultImports": true,
       "experimentalDecorators": true,
