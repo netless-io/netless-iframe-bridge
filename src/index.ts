@@ -335,13 +335,13 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
     }
 
-    private computedZindex(): void {
+    public computedZindex(): void {
         const zIndexString = "z-index: -1;";
         const index = this.cssList.findIndex(css => css === zIndexString);
         if (index !== -1) {
             this.cssList.splice(index, 1);
         }
-        if (!this.isClicker() || this.isDisableInput()) {
+        if (!this.isClicker() || this.isDisableInput) {
             this.cssList.push(zIndexString);
         }
     }
@@ -524,7 +524,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         return this.allowAppliances.includes(currentApplianceName);
     }
 
-    private isDisableInput(): boolean {
+    private get isDisableInput(): boolean {
         if ("disableDeviceInputs" in this.displayer) {
             return (this.displayer as Room).disableDeviceInputs;
         } else {
