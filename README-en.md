@@ -37,7 +37,8 @@ if (!bridge) {
         url: "example.com", // address of the iframe
         width: 1280, // the width of the lesson, in px
         height: 720, // height of the lesson, in px
-        displaySceneDir: "/example" // Customize the scene directory where the h5 courseware is bound, if you switch to another directory, the courseware will be hidden automatically.
+        displaySceneDir: "/example", // Customize the scene directory where the h5 courseware is bound, if you switch to another directory, the courseware will be hidden automatically.
+        useSelector: false, // This option is optional, the default is false, on will allow selector teaching aids to operate the courseware
     })
 }
 ```

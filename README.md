@@ -37,7 +37,8 @@ if (!bridge) {
         url: "example.com", // iframe 的地址
         width: 1280, // 课件的宽, 单位 px
         height: 720, // 课件的高, 单位 px
-        displaySceneDir: "/example" // 自定义 h5 课件绑定的 scene 目录，切换到其他目录，课件会自动隐藏，注意，此目录需要用户在白板中自行创建
+        displaySceneDir: "/example", // 自定义 h5 课件绑定的 scene 目录，切换到其他目录，课件会自动隐藏，注意，此目录需要用户在白板中自行创建,
+        useSelector: false, // optional 此选项为可选，默认 false，开启会允许 selector 教具操作课件
     })
 }
 ```
