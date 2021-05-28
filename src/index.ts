@@ -341,7 +341,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         if (index !== -1) {
             this.cssList.splice(index, 1);
         }
-        if (!this.isClicker()) {
+        if (!this.isClicker() || this.isDisableInput()) {
             this.cssList.push(zIndexString);
         }
     }
@@ -522,6 +522,14 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
         const currentApplianceName = (this.displayer as Room).state.memberState.currentApplianceName;
         return this.allowAppliances.includes(currentApplianceName);
+    }
+
+    private isDisableInput(): boolean {
+        if ("disableDeviceInputs" in this.displayer) {
+            return (this.displayer as Room).disableDeviceInputs;
+        } else {
+            return true;
+        }
     }
 
     private get iframeOrigin (): string | undefined {
