@@ -127,7 +127,7 @@ bridge.scaleIframeToFit()
 parent.postMessage({
     kind: "SetPage",
     payload: 10 // 根据 h5 课件的页数自行设置
-})
+}, "*") // 如果 iframe 跟父 window 不同源可能有跨域问题, 这里为了方便使用了 "*"
 ```
 
 ### 插件事件
