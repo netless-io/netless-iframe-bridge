@@ -145,6 +145,8 @@ parent.postMessage({
 | OnCreate            | 插件创建时发送事件                                           |
 | SetPage             | 设置白板的页数                                               |
 | GetAttributes       | 接收到此事件会发送一个同名事件到 `iframe` 中并带上当前的 `attributes` |
+| NextPage            | 切换白板到下一页                                              |
+| PrevPage            | 切换白板到上一页                                              |
 
 
 
