@@ -56,6 +56,7 @@ export enum IframeEvents {
     WrapperDidUpdate = "WrapperDidUpdate",
     DispayIframe = "DispayIframe",
     HideIframe = "HideIframe",
+    PageTo = "PageTo",
 }
 
 export enum DomEvents {
@@ -398,6 +399,10 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 this.handleGetAttributes();
                 break;
             }
+            case IframeEvents.PageTo: {
+                this.handlePageTo(data);
+                break
+            }
             default: {
                 // console.warn(`${data.kind} not allow event.`);
                 break;
@@ -458,6 +463,17 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
         (this.displayer as any).setSceneIndex(prevPageNum - 1);
         this.dispatchMagixEvent(IframeEvents.PrevPage, {});
+    }
+
+    private handlePageTo(data: any): void {
+        this.ensureNotReadonly();
+        const page = data.payload as number;
+        if (!Number.isSafeInteger(page) || page <= 0) {
+            return;
+        }
+        const index = page - 1;
+        (this.displayer as any).setSceneIndex(index);
+        this.dispatchMagixEvent(IframeEvents.PageTo, index);
     }
 
     private handleRemoveAllMagixEvent(): void {

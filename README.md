@@ -13,6 +13,20 @@ npm install @netless/iframe-bridge
 yarn add @netless/iframe-bridge
 ```
 
+## 生命周期
+
+`IframeBridge` 在监听到 `iframe` 的 `load` 事件时, 会发送一个 `Init` 事件到 `iframe`
+并附带当前的 `attributes` 和 `room` 的 `state`
+
+如果 `iframe` 中没有接收到 `Init` 事件, 则可以手动发送一个 `SDKCreate` 事件到 `IframeBridge`
+
+`IframeBridge` 会回复一个 `Init` 事件到 `iframe` 中
+
+### 事件回放
+当 `iframe` 自己准备完毕时可以发送一个 `Ready` 事件到 `IframeBridge`
+
+`IframeBridge` 会把最后一个接收的自定义事件发送到 `iframe` 中
+
 ## example
 
 ``` typescript
@@ -130,6 +144,14 @@ parent.postMessage({
 }, "*") // 如果 iframe 跟父 window 不同源可能有跨域问题, 这里为了方便使用了 "*"
 ```
 
+切换至指定页数
+```typescript
+parent.postMessage({
+    kind: "PageTo",
+    payload: 2 // 切换至第二页
+}, "*")
+```
+
 ### 插件事件
 
 | 事件名              | 解释                                                         |
@@ -147,6 +169,7 @@ parent.postMessage({
 | GetAttributes       | 接收到此事件会发送一个同名事件到 `iframe` 中并带上当前的 `attributes` |
 | NextPage            | 切换白板到下一页                                              |
 | PrevPage            | 切换白板到上一页                                              |
+| PageTo              | 切换至指定页数                                                |
 
 
 
