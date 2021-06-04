@@ -23,7 +23,7 @@ yarn add @netless/iframe-bridge
 `IframeBridge` 会回复一个 `Init` 事件到 `iframe` 中
 
 ### 事件回放
-当 `iframe` 自己准备完毕时可以发送一个 `Ready` 事件到 `IframeBridge`
+当 `iframe` 自己准备完毕时可以发送一个 `Ready` 事件到 `IframeBridge`
 
 `IframeBridge` 会把最后一个接收的自定义事件发送到 `iframe` 中
 
@@ -169,7 +169,7 @@ parent.postMessage({
 ```typescript
 parent.postMessage({
     kind: "RegisterMagixEvent",
-    payload: "clickA", // 注册对要接收事件的监听　
+    payload: "clickA", // 注册对要接收事件的监听，同一个事件只会监听一次
 }, "*")
 ```
 
@@ -183,6 +183,15 @@ parent.postMessage({
         event: "clickA",
         payload: { data: 1 }
     }
+}
+```
+
+### 监听来自白板的翻页事件
+白板切换 `scene` 会触发一个 `RoomStateChanged` 事件然后把 `state` 发送到 `iframe` 中
+```typescript
+{
+  kind: "RoomStateChanged",
+  payload: { sceneState: { index: 0 } } // index 就是白板页数的 index, 从 0 开始
 }
 ```
 
@@ -204,6 +213,7 @@ parent.postMessage({
 | NextPage            | 切换白板到下一页                                              |
 | PrevPage            | 切换白板到上一页                                              |
 | PageTo              | 切换至指定页数                                                |
+| RoomStateChanged    | 白板状态改变事件                                              |
 
 
 
