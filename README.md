@@ -152,6 +152,40 @@ parent.postMessage({
 }, "*")
 ```
 
+### 从 iframe 中发送并接收自定义事件
+一共有三个步骤
+1. 发送自定义事件
+```typescript
+parent.postMessage({
+    kind: "DispatchMagixEvent",
+    payload: {
+        event: "clickA", // 要发送到事件名称
+        payload: { data: 1 } // 事件内容
+    }
+}, "*") 
+```
+
+2. 注册对事件的监听
+```typescript
+parent.postMessage({
+    kind: "RegisterMagixEvent",
+    payload: "clickA", // 注册对要接收事件的监听　
+}, "*")
+```
+
+3. 接收事件
+
+`iframe` 会收到一个 `ReciveMagixEvent` 的事件
+```typescript
+{
+    kind: "ReciveMagixEvent",
+    payload: {
+        event: "clickA",
+        payload: { data: 1 }
+    }
+}
+```
+
 ### 插件事件
 
 | 事件名              | 解释                                                         |
