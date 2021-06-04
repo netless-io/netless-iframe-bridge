@@ -18,6 +18,18 @@ yarn add @netless/iframe-bridge
 `IframeBridge` 在监听到 `iframe` 的 `load` 事件时, 会发送一个 `Init` 事件到 `iframe`
 并附带当前的 `attributes` 和 `room` 的 `state`
 
+```typescript
+{
+    kind: "Init",
+    payload: {
+        attributes: object,  // 当前 bridge 的 attributes
+        roomState: object, // 当前白板的 state
+        currentPage: number, //当前页数
+        observerId: number, // 当前白板的 observerId
+    }
+}
+```
+
 如果 `iframe` 中没有接收到 `Init` 事件, 则可以手动发送一个 `SDKCreate` 事件到 `IframeBridge`
 
 `IframeBridge` 会回复一个 `Init` 事件到 `iframe` 中

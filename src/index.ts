@@ -246,6 +246,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 attributes: this.attributes,
                 roomState: IframeBridge.displayer.state,
                 currentPage: this.currentPage,
+                observerId: this.displayer.observerId
             }});
             IframeBridge.emitter.emit(DomEvents.IframeLoad, ev);
             IframeBridge.emitter.on(IframeEvents.Ready, () => {
@@ -416,6 +417,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             attributes: this.attributes,
             roomState: IframeBridge.displayer.state,
             currentPage: this.currentPage,
+            observerId: this.displayer.observerId
         }});
     }
 
