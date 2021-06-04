@@ -245,6 +245,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.postMessage({ kind: IframeEvents.Init, payload: {
                 attributes: this.attributes,
                 roomState: IframeBridge.displayer.state,
+                currentPage: this.currentPage,
             }});
             IframeBridge.emitter.emit(DomEvents.IframeLoad, ev);
             IframeBridge.emitter.on(IframeEvents.Ready, () => {
@@ -414,6 +415,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         this.postMessage({ kind: IframeEvents.Init, payload: {
             attributes: this.attributes,
             roomState: IframeBridge.displayer.state,
+            currentPage: this.currentPage,
         }});
     }
 
@@ -490,7 +492,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         });
     }
 
-    private postMessage(message: any): void {
+    public postMessage(message: any): void {
         if (this.iframe) {
             this.iframe.contentWindow?.postMessage(message, "*");
         }
