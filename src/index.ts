@@ -1,4 +1,4 @@
-import {InvisiblePlugin, Event, RoomState, InvisiblePluginContext, Displayer, Room, DisplayerState, AnimationMode, PlayerPhase} from "white-web-sdk";
+import {InvisiblePlugin, Event, RoomState, InvisiblePluginContext, Displayer, Room, DisplayerState, AnimationMode, PlayerPhase, RoomPhase} from "white-web-sdk";
 import {EventEmitter2} from "eventemitter2";
 import {times} from "./utils";
 
@@ -503,7 +503,9 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     public dispatchMagixEvent(event: string, payload: any): void {
         this.ensureNotReadonly();
         super.setAttributes({ lastEvent: { name: event, payload } });
-        (this.displayer as any).dispatchMagixEvent(event, payload);
+        if ((this.displayer as Room).phase === RoomPhase.Connected) {
+            (this.displayer as any).dispatchMagixEvent(event, payload);
+        }
     }
 
     private get currentIndex(): number {
