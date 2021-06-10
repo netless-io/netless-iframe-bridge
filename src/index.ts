@@ -1,4 +1,4 @@
-import {InvisiblePlugin, Event, RoomState, InvisiblePluginContext, Displayer, Room, DisplayerState, AnimationMode, PlayerPhase} from "white-web-sdk";
+import {InvisiblePlugin, Event, RoomState, InvisiblePluginContext, Displayer, Room, DisplayerState, AnimationMode, PlayerPhase, RoomPhase} from "white-web-sdk";
 import {EventEmitter2} from "eventemitter2";
 import {times} from "./utils";
 
@@ -179,13 +179,15 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public setAttributes(payload: any): void {
         this.ensureNotReadonly();
-        if (payload.url) {
-            this.listenIframe(Object.assign(this.attributes, payload));
+        if (this.isConnectedRoom()) {
+            if (payload.url) {
+                this.listenIframe(Object.assign(this.attributes, payload));
+            }
+            if (payload.displaySceneDir) {
+                this.computedIframeDisplay(this.displayer.state, Object.assign(this.attributes, payload));
+            }
+            super.setAttributes(payload);
         }
-        if (payload.displaySceneDir) {
-            this.computedIframeDisplay(this.displayer.state, Object.assign(this.attributes, payload));
-        }
-        super.setAttributes(payload);
     }
 
     public destroy(): void {
@@ -440,7 +442,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.postMessage({ kind: IframeEvents.ReciveMagixEvent, payload: event });
         };
         this.magixEventMap.set(eventName, listener);
-        this.displayer.addMagixEventListener(eventName, listener);
+        this.displayer.addMagixEventListener(eventName, listener);  
     }
 
     private handleRemoveMagixEvent(data: any): void {
@@ -451,33 +453,39 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     private handleNextPage(): void {
         this.ensureNotReadonly();
-        const nextPageNum = this.currentPage + 1;
-        if (nextPageNum > this.totalPage) {
-            return;
+        if (this.isConnectedRoom()) {
+            const nextPageNum = this.currentPage + 1;
+            if (nextPageNum > this.totalPage) {
+                return;
+            }
+            (this.displayer as any).setSceneIndex(nextPageNum - 1);
+            this.dispatchMagixEvent(IframeEvents.NextPage, {});
         }
-        (this.displayer as any).setSceneIndex(nextPageNum - 1);
-        this.dispatchMagixEvent(IframeEvents.NextPage, {});
     }
 
     private handlePrevPage(): void {
         this.ensureNotReadonly();
-        const prevPageNum = this.currentPage - 1;
-        if (prevPageNum < 0) {
-            return;
+        if (this.isConnectedRoom()) {
+            const prevPageNum = this.currentPage - 1;
+            if (prevPageNum < 0) {
+                return;
+            }
+            (this.displayer as any).setSceneIndex(prevPageNum - 1);
+            this.dispatchMagixEvent(IframeEvents.PrevPage, {});
         }
-        (this.displayer as any).setSceneIndex(prevPageNum - 1);
-        this.dispatchMagixEvent(IframeEvents.PrevPage, {});
     }
 
     private handlePageTo(data: any): void {
         this.ensureNotReadonly();
-        const page = data.payload as number;
-        if (!Number.isSafeInteger(page) || page <= 0) {
-            return;
+        if (this.isConnectedRoom()) {
+            const page = data.payload as number;
+            if (!Number.isSafeInteger(page) || page <= 0) {
+                return;
+            }
+            const index = page - 1;
+            (this.displayer as any).setSceneIndex(index);
+            this.dispatchMagixEvent(IframeEvents.PageTo, index);
         }
-        const index = page - 1;
-        (this.displayer as any).setSceneIndex(index);
-        this.dispatchMagixEvent(IframeEvents.PageTo, index);
     }
 
     private handleRemoveAllMagixEvent(): void {
@@ -502,8 +510,10 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public dispatchMagixEvent(event: string, payload: any): void {
         this.ensureNotReadonly();
-        super.setAttributes({ lastEvent: { name: event, payload } });
-        (this.displayer as any).dispatchMagixEvent(event, payload);
+        if (this.isConnectedRoom()) {
+            super.setAttributes({ lastEvent: { name: event, payload } });
+            (this.displayer as Room).dispatchMagixEvent(event, payload);
+        }
     }
 
     private get currentIndex(): number {
@@ -534,6 +544,13 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         if (this.readonly) {
             throw new Error("readOnly mode cannot invoke this method");
         }
+    }
+
+    private isConnectedRoom(): boolean {
+        if (this.isReplay) {
+            return false;
+        }
+        return (this.displayer as Room).phase === RoomPhase.Connected;
     }
 
     private isClicker(): boolean {
