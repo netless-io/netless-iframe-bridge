@@ -1,6 +1,19 @@
-import {InvisiblePlugin, Event, RoomState, InvisiblePluginContext, Displayer, Room, DisplayerState, AnimationMode, PlayerPhase, RoomPhase, isPlayer} from "white-web-sdk";
-import {EventEmitter2} from "eventemitter2";
-import {times} from "./utils";
+import {
+    AnimationMode,
+    Displayer,
+    DisplayerState,
+    Event,
+    InvisiblePlugin,
+    InvisiblePluginContext,
+    isPlayer,
+    PlayerPhase,
+    Room,
+    RoomPhase,
+    RoomState,
+    autorun
+    } from 'white-web-sdk';
+import { EventEmitter2 } from 'eventemitter2';
+import { times } from './utils';
 
 export type IframeBridgeAttributes = {
     readonly url: string;
@@ -81,10 +94,32 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private readonly magixEventMap: Map<string, (event: Event) => void> = new Map();
     private cssList: string[] = [];
     private allowAppliances = ["clicker"];
+    private bridgeDisposer: any
 
     public constructor(context: InvisiblePluginContext) {
         super(context);
         IframeBridge.displayer = context.displayer;
+        IframeBridge.emitter.on("created", () => {
+            this.bridgeDisposer = autorun(() => {
+                const attributes = this.attributes;
+                if (attributes.url) {
+                    const iframeSrc = this.iframe?.src;
+                    if (iframeSrc && iframeSrc !== attributes.url) {
+                        this.listenIframe(attributes);
+                    }
+                }
+                if (attributes.displaySceneDir) {
+                    this.computedIframeDisplay(this.displayer.state, attributes);
+                }
+                if (attributes.width || attributes.height) {
+                    if (this.iframe) {
+                        this.iframe.width = `${attributes.width}px`;
+                        this.iframe.height = `${attributes.height}px`;
+                    }
+                }
+                this.postMessage({ kind: IframeEvents.AttributesUpdate, payload: attributes });
+            });
+        })
     }
 
     public static onCreate(plugin: IframeBridge): void {
@@ -96,25 +131,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             }
         }
         IframeBridge.emitter.emit(IframeEvents.OnCreate, plugin);
-    }
-
-    public onAttributesUpdate(attributes: IframeBridgeAttributes): void {
-        if (attributes.url) {
-            const iframeSrc = this.iframe?.src;
-            if (iframeSrc && iframeSrc !== attributes.url) {
-                this.listenIframe(attributes);
-            }
-        }
-        if (attributes.displaySceneDir) {
-            this.computedIframeDisplay(this.displayer.state, attributes);
-        }
-        if (attributes.width || attributes.height) {
-            if (this.iframe) {
-                this.iframe.width = `${attributes.width}px`;
-                this.iframe.height = `${attributes.height}px`;
-            }
-        }
-        this.postMessage({ kind: IframeEvents.AttributesUpdate, payload: attributes });
+        IframeBridge.emitter.emit("created");
     }
 
     public onDestroy(): void {
@@ -584,6 +601,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.iframe = null;
             IframeBridge.alreadyCreate = false;
         }
+        this.bridgeDisposer();
     }
 }
 
