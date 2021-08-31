@@ -517,7 +517,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public postMessage(message: any): void {
         if (this.iframe) {
-            this.iframe.contentWindow?.postMessage(message, "*");
+            this.iframe.contentWindow?.postMessage(JSON.parse(JSON.stringify(message)), "*");
         }
     }
 
