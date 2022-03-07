@@ -49,6 +49,7 @@ const sdk = new WhiteWebSdk({
   // 其他参数
   invisiblePlugins: [IframeBridge],
   wrappedComponents: [IframeWrapper],
+  useMobXState: true // 注意: 此配置必须开启
 })
 
 const room = await sdk.joinRoom()
