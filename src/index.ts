@@ -10,10 +10,12 @@ import {
     Room,
     RoomPhase,
     RoomState,
-    autorun
+    autorun,
+    isRoom
     } from 'white-web-sdk';
 import { EventEmitter2 } from 'eventemitter2';
 import { times } from './utils';
+import debounce from "lodash.debounce";
 
 export type IframeBridgeAttributes = {
     readonly url: string;
@@ -98,6 +100,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
 
     public constructor(context: InvisiblePluginContext) {
         super(context);
+        IframeBridge.emitter.setMaxListeners(100);
         IframeBridge.displayer = context.displayer;
         IframeBridge.emitter.on("created", () => {
             this.bridgeDisposer = autorun(() => {
@@ -105,7 +108,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 if (attributes.url) {
                     const iframeSrc = this.iframe?.src;
                     if (iframeSrc && iframeSrc !== attributes.url) {
-                        this.listenIframe(attributes);
+                        this.execListenIframe(attributes);
                     }
                 }
                 if (attributes.displaySceneDir) {
@@ -194,18 +197,6 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }, 200);
     }
 
-    public setAttributes(payload: any): void {
-        if (this.canOperation) {
-            if (payload.url) {
-                this.listenIframe(Object.assign(this.attributes, payload));
-            }
-            if (payload.displaySceneDir) {
-                this.computedIframeDisplay(this.displayer.state, Object.assign(this.attributes, payload));
-            }
-            super.setAttributes(payload);
-        }
-    }
-
     public destroy(): void {
         this._destory();
         super.destroy();
@@ -257,6 +248,10 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         }
     }
 
+    private execListenIframe = debounce((options: BaseOption) => {
+        this.listenIframe(options);
+    }, 50);
+
     private listenIframe(options: BaseOption): void {
         const iframe = document.getElementById(IframeBridge.kind) as HTMLIFrameElement;
         const loadListener = (ev: globalThis.Event) => {
@@ -271,6 +266,14 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
                 this.postMessage(this.attributes.lastEvent?.payload);
             });
             this.computedStyleAndIframeDisplay();
+            if (isRoom(this.displayer)) {
+                const room = this.displayer as Room;
+                // 重新加载 iframe 会出现位置错误, 手动触发一下 scale 重新计算位置
+                room.moveCamera({
+                    scale: room.state.cameraState.scale + 0.005,
+                    animationMode: AnimationMode.Immediately
+                });
+            }
         };
         if (iframe.src) {
             iframe.removeEventListener("load", loadListener);

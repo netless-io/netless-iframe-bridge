@@ -1,6 +1,6 @@
 {
   "name": "@netless/iframe-bridge",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "description": "iframe plugin for white-web-sdk",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,12 +20,14 @@
   "homepage": "https://github.com/netless-io/netless-iframe-bridge#readme",
   "dependencies": {
     "eventemitter2": "^6.4.3",
+    "lodash.debounce": "^4.0.8",
     "react": "^16.13.1"
   },
   "peerDependencies": {
     "white-web-sdk": "^2.10.1"
   },
   "devDependencies": {
+    "@types/lodash.debounce": "^4.0.6",
     "@types/react": "^16.9.49",
     "tslib": "^2.2.0",
     "tslint": "^6.1.3",
