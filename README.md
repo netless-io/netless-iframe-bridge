@@ -4,6 +4,8 @@
 
 > 注意, `iframe` 只有在教具为 `选择工具` 时候才能进行交互
 
+> 注意 `new WhiteWebSdk` 时, 必须开启 `useMobxState`
+
 ## 安装
 ```
 # npm

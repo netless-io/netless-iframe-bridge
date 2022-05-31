@@ -4,12 +4,14 @@ import { IframeBridge, IframeWrapper } from "../dist"
 const whiteWebSdk = new WhiteWebSdk({
     appIdentifier: "appIdentifier",
     invisiblePlugins: [IframeBridge],
-    wrappedComponents: [IframeWrapper]
+    wrappedComponents: [IframeWrapper],
+    useMobXState: true
 });
 
 const joinRoomParams = {
     uuid: "uuid",
     roomToken: "roomToken",
+    uid: "test",
 };
 
 whiteWebSdk.joinRoom(joinRoomParams).then(function(room) {
@@ -18,6 +20,7 @@ whiteWebSdk.joinRoom(joinRoomParams).then(function(room) {
     room.bindHtmlElement(document.getElementById("whiteboard"));
     window.room = room
     const bridge = room.getInvisiblePlugin(IframeBridge.kind);
+    window.bridge = bridge;
     if (!bridge) {
         IframeBridge.insert({ // 插件插入到白板中
             room,

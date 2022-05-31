@@ -5,16 +5,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "parcel index.html",
+    "dev": "vite",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "parcel-bundler": "^1.12.4"
-  },
   "peerDependencies": {
     "white-web-sdk": "^2.10.1"
+  },
+  "dependencies": {
+    "regenerator-runtime": "^0.13.9",
+    "white-web-sdk": "2.15.x"
+  },
+  "devDependencies": {
+    "vite": "^2.9.9"
   }
 }

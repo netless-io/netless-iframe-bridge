@@ -9,6 +9,7 @@ type IframeWrapperState = {
 export class IframeWrapper extends React.Component<{}, IframeWrapperState> {
     private static readonly hiddenClass: string = "netless-iframe-brdige-hidden";
     private styleDom: HTMLStyleElement | null = null;
+    private ref = React.createRef<HTMLIFrameElement>();
 
     public constructor(props: {}) {
         super(props);
@@ -28,6 +29,15 @@ export class IframeWrapper extends React.Component<{}, IframeWrapperState> {
         });
         IframeBridge.emitter.on(IframeEvents.HideIframe, () => {
             this.setState({ className: IframeWrapper.hiddenClass });
+        });
+        IframeBridge.emitter.on(IframeEvents.GetRootRect, () => {
+            if (this.ref.current) {
+                const parent = this.ref.current.parentElement;
+                if (parent) {
+                    const rect = parent.getBoundingClientRect();
+                    IframeBridge.emitter.emit(IframeEvents.ReplayRootRect, rect);
+                }
+            }
         });
     }
 
@@ -60,7 +70,7 @@ export class IframeWrapper extends React.Component<{}, IframeWrapperState> {
     public render(): React.ReactNode {
         return <React.Fragment>
             {this.props.children}
-            {this.state.canDisplay && <iframe id={IframeBridge.kind} className={this.state.className}></iframe>}
+            {this.state.canDisplay && <iframe ref={this.ref} id={IframeBridge.kind} className={this.state.className}></iframe>}
         </React.Fragment>;
     }
 }

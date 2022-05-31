@@ -71,6 +71,8 @@ export enum IframeEvents {
     WrapperDidUpdate = "WrapperDidUpdate",
     DispayIframe = "DispayIframe",
     HideIframe = "HideIframe",
+    GetRootRect = "GetRootRect",
+    ReplayRootRect = "ReplayRootRect",
     PageTo = "PageTo",
 }
 
@@ -97,12 +99,16 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private cssList: string[] = [];
     private allowAppliances = ["clicker"];
     private bridgeDisposer: any
+    private rootRect: DOMRect | null = null;
 
     public constructor(context: InvisiblePluginContext) {
         super(context);
         IframeBridge.emitter.setMaxListeners(100);
         IframeBridge.displayer = context.displayer;
         IframeBridge.emitter.on("created", () => {
+            IframeBridge.emitter.on(IframeEvents.ReplayRootRect, rect => {
+                this.rootRect = rect;
+            });
             this.bridgeDisposer = autorun(() => {
                 const attributes = this.attributes;
                 if (attributes.url) {
@@ -171,6 +177,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             this.getIframe();
             this.listenIframe(options);
             this.listenDisplayerState();
+            IframeBridge.emitter.emit(IframeEvents.GetRootRect);
         };
         if (this.getIframe()) {
             wrapperDidMountListener();
@@ -321,6 +328,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
     private stateChangeListener = (state: RoomState) => {
         this.postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
         if (state.cameraState) {
+            IframeBridge.emitter.emit(IframeEvents.GetRootRect);
             this.computedStyle(state);
         }
         if (state.memberState) {
@@ -336,12 +344,13 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
         const cameraState = state.cameraState;
         if (this.iframe) {
             const {width, height, scale, centerX, centerY} = cameraState;
-            const transformOriginX = `${(width / 2)}px`;
-            const transformOriginY = `${(height / 2)}px`;
+            const rootRect = this.rootRect || { x: 0, y: 0 }
+            const transformOriginX = `${(width / 2) + rootRect.x}px`;
+            const transformOriginY = `${(height / 2) + rootRect.y}px`;
             const transformOrigin = `transform-origin: ${transformOriginX} ${transformOriginY};`;
             const iframeXDiff = ((width - this.attributes.width) / 2) * scale;
             const iframeYDiff = ((height - this.attributes.height) / 2) * scale;
-            const x =  - (centerX * scale) + iframeXDiff;
+            const x = - (centerX * scale) + iframeXDiff;
             const y = - (centerY * scale) + iframeYDiff;
             const transform = `transform: translate(${x}px,${y}px) scale(${scale}, ${scale});`;
             const cssList = [position, borderWidth, top, left, transformOrigin, transform];
@@ -605,6 +614,7 @@ export class IframeBridge extends InvisiblePlugin<IframeBridgeAttributes> {
             IframeBridge.alreadyCreate = false;
         }
         this.bridgeDisposer();
+        IframeBridge.emitter.removeAllListeners();
     }
 }
 
